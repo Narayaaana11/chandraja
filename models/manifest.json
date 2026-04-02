@@ -1,0 +1,68 @@
+{
+  "last_dataset_hash": "4574b49e17ab0f385c011fa9fd12d9bb",
+  "last_updated": "2026-03-20T16:45:41+00:00",
+  "best_model": "C:\\Users\\naray\\Downloads\\smart_eval_project\\smart_eval\\models\\best_model.pkl",
+  "best_r2": 0.931643,
+  "models": [
+    {
+      "run_id": "8894bfd9-0d1f-4013-9e7d-26b6519b419e",
+      "timestamp": "2026-03-20T16:22:11+00:00",
+      "model_path": "C:\\Users\\naray\\Downloads\\smart_eval_project\\smart_eval\\models\\model_20260320_215211.pkl",
+      "metrics": {
+        "mae": 0.06,
+        "r2": 0.889456,
+        "rmse": 0.066496,
+        "mape": 8.059259
+      },
+      "dataset_version": "v1"
+    },
+    {
+      "run_id": "81ab53fe-d504-48db-a289-971f86be339b",
+      "timestamp": "2026-03-20T16:24:34+00:00",
+      "model_path": "C:\\Users\\naray\\Downloads\\smart_eval_project\\smart_eval\\models\\model_20260320_215434.pkl",
+      "metrics": {
+        "mae": 0.06,
+        "r2": 0.889456,
+        "rmse": 0.066496,
+        "mape": 8.059259
+      },
+      "dataset_version": "v1"
+    },
+    {
+      "run_id": "22368fc5-8375-4d43-ac2d-f66cf7fb2497",
+      "timestamp": "2026-03-20T16:43:53+00:00",
+      "model_path": "C:\\Users\\naray\\Downloads\\smart_eval_project\\smart_eval\\models\\model_20260320_221354.pkl",
+      "metrics": {
+        "mae": 0.05999999999999803,
+        "r2": 0.889455555555562,
+        "rmse": 0.06649644936218416,
+        "mape": 8.059259259258967
+      },
+      "dataset_version": "v1"
+    },
+    {
+      "run_id": "a5bf782c-82c0-4c96-a6ea-013b6240368e",
+      "timestamp": "2026-03-20T16:44:44+00:00",
+      "model_path": "C:\\Users\\naray\\Downloads\\smart_eval_project\\smart_eval\\models\\model_20260320_221444.pkl",
+      "metrics": {
+        "mae": 0.05999999999999803,
+        "r2": 0.889455555555562,
+        "rmse": 0.06649644936218416,
+        "mape": 8.059259259258967
+      },
+      "dataset_version": "v1"
+    },
+    {
+      "run_id": "e3a64d3c-1356-4fa3-9666-e44a1ff3a95a",
+      "timestamp": "2026-03-20T16:45:41+00:00",
+      "model_path": "C:\\Users\\naray\\Downloads\\smart_eval_project\\smart_eval\\models\\model_20260320_221617.pkl",
+      "metrics": {
+        "mae": 0.045319,
+        "r2": 0.931643,
+        "rmse": 0.05229,
+        "mape": 5.890212
+      },
+      "dataset_version": "v1"
+    }
+  ]
+}

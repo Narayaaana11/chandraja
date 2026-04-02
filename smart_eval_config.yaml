@@ -1,0 +1,50 @@
+server:
+  host: "0.0.0.0"
+  port: 5000
+  debug: true
+  max_upload_size_mb: 20
+
+ocr:
+  engine: "paddleocr" # paddleocr or tesseract (fallback)
+  language: "en"
+  dpi: 300
+  use_gpu: false
+
+preprocessing:
+  lowercase: true
+  remove_special_chars: true
+  normalize_whitespace: true
+  remove_stopwords: false # optional
+  sentence_segmentation: false # optional
+
+evaluation:
+  model: "all-MiniLM-L6-v2" # sentence-transformers model
+  similarity_threshold: 0.5
+  keyword_matching: true
+  question_delimiter: "Q" # prefix used to split questions e.g. Q1, Q2
+
+grading:
+  total_marks: 100
+  per_question_marks: 10
+  partial_scoring: true
+  partial_scoring_levels:
+    - threshold: 0.80
+      percentage: 100
+    - threshold: 0.60
+      percentage: 75
+    - threshold: 0.40
+      percentage: 50
+    - threshold: 0.20
+      percentage: 25
+    - threshold: 0.0
+      percentage: 0
+
+database:
+  type: "mongodb" # mongodb or mysql
+  mongodb_uri: "mongodb://localhost:27017/"
+  db_name: "smart_eval"
+
+storage:
+  upload_folder: "uploads/"
+  results_folder: "results/"
+  allowed_extensions: ["pdf"]

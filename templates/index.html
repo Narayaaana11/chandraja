@@ -1,0 +1,1752 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Nexus Eval — Smart Evaluation System</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+/* ══════════════════════════════════════════
+   ROOT TOKENS
+══════════════════════════════════════════ */
+:root{
+  --bg:         #f0ede8;
+  --bg2:        #e8e4dd;
+  --bg3:        #ddd8cf;
+  --paper:      #faf9f6;
+  --ink:        #1a1612;
+  --ink2:       #3d3830;
+  --ink3:       #7a7268;
+  --ink4:       #b0a898;
+  --line:       rgba(26,22,18,.1);
+  --line2:      rgba(26,22,18,.06);
+  --red:        #d63b2f;
+  --red-soft:   rgba(214,59,47,.1);
+  --red-mid:    rgba(214,59,47,.2);
+  --teal:       #1a7a6e;
+  --teal-soft:  rgba(26,122,110,.1);
+  --amber:      #c97c10;
+  --amber-soft: rgba(201,124,16,.1);
+  --r:          6px;
+  --r2:         12px;
+  --r3:         20px;
+  --fw-d:       'Bebas Neue', sans-serif;
+  --fw-b:       'Outfit', sans-serif;
+  --fw-m:       'JetBrains Mono', monospace;
+}
+
+/* ══════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--fw-b);
+  background:var(--bg);
+  color:var(--ink);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* grid lines background */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(var(--line2) 1px,transparent 1px),
+    linear-gradient(90deg,var(--line2) 1px,transparent 1px);
+  background-size:40px 40px;
+  pointer-events:none;z-index:0;
+}
+
+/* ══════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════ */
+.hdr{
+  position:sticky;top:0;z-index:200;
+  background:var(--ink);
+  color:var(--bg);
+  display:flex;align-items:stretch;
+  height:64px;
+}
+.hdr-logo{
+  display:flex;align-items:center;gap:12px;
+  padding:0 32px;
+  border-right:1px solid rgba(255,255,255,.08);
+  flex-shrink:0;
+}
+.hdr-logo .mark{
+  width:36px;height:36px;border-radius:8px;
+  background:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;line-height:1;
+}
+.hdr-logo .wordmark{
+  font-family:var(--fw-d);
+  font-size:26px;letter-spacing:2px;
+  color:#fff;line-height:1;
+}
+.hdr-logo .sub{
+  font-size:9px;font-weight:500;
+  letter-spacing:3px;text-transform:uppercase;
+  color:rgba(255,255,255,.35);margin-top:3px;
+}
+.hdr-nav{
+  display:flex;align-items:stretch;
+  padding:0 16px;gap:4px;
+  flex:1;
+}
+.hdr-tab{
+  display:flex;align-items:center;gap:8px;
+  padding:0 20px;
+  font-size:12px;font-weight:600;letter-spacing:.8px;
+  text-transform:uppercase;cursor:pointer;
+  color:rgba(255,255,255,.35);
+  border-bottom:3px solid transparent;
+  transition:all .2s;
+  position:relative;
+}
+.hdr-tab:hover{color:rgba(255,255,255,.7)}
+.hdr-tab.on{
+  color:#fff;
+  border-bottom-color:var(--red);
+}
+.hdr-tab .tab-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--red);opacity:0;transition:opacity .2s;
+}
+.hdr-tab.on .tab-dot{opacity:1}
+.hdr-right{
+  margin-left:auto;display:flex;align-items:center;
+  padding:0 24px;gap:10px;
+  border-left:1px solid rgba(255,255,255,.08);
+}
+.status-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#2ecc71;box-shadow:0 0 8px #2ecc71;
+  animation:pulse-dot 2s ease infinite;
+}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
+.status-txt{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.5px}
+
+/* ══════════════════════════════════════════
+   PAGES
+══════════════════════════════════════════ */
+.page{display:none;position:relative;z-index:1;min-height:calc(100vh - 64px)}
+.page.on{display:flex;flex-direction:column}
+
+/* ══════════════════════════════════════════
+   EVALUATE PAGE — SPLIT LAYOUT
+══════════════════════════════════════════ */
+.eval-wrap{
+  display:grid;
+  grid-template-columns:440px 1fr;
+  min-height:calc(100vh - 64px);
+}
+@media(max-width:900px){.eval-wrap{grid-template-columns:1fr}}
+
+/* LEFT PANEL */
+.lp{
+  background:var(--paper);
+  border-right:1px solid var(--line);
+  padding:32px;
+  display:flex;flex-direction:column;gap:24px;
+  position:sticky;top:64px;
+  height:calc(100vh - 64px);
+  overflow-y:auto;
+}
+.lp::-webkit-scrollbar{width:4px}
+.lp::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:4px}
+
+/* section label */
+.sec-label{
+  font-size:9px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:var(--ink4);
+  margin-bottom:10px;
+  display:flex;align-items:center;gap:8px;
+}
+.sec-label::after{
+  content:'';flex:1;height:1px;background:var(--line);
+}
+
+/* upload zone */
+.upload-z{
+  border:1.5px dashed var(--line);
+  border-radius:var(--r2);
+  padding:28px 20px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .25s;
+  background:var(--bg);
+  position:relative;overflow:hidden;
+}
+.upload-z::after{
+  content:'';
+  position:absolute;inset:0;
+  background:radial-gradient(circle at 50% 50%, rgba(214,59,47,.05),transparent 70%);
+  opacity:0;transition:opacity .3s;
+}
+.upload-z:hover{border-color:var(--red);background:var(--bg2)}
+.upload-z:hover::after{opacity:1}
+.upload-z .uz-emoji{font-size:32px;display:block;margin-bottom:10px}
+.upload-z .uz-h{font-size:13px;font-weight:600;color:var(--ink2)}
+.upload-z .uz-s{font-size:11px;color:var(--ink4);margin-top:4px}
+#image-input,#multi-input{display:none}
+.preview-img{
+  width:100%;border-radius:var(--r2);
+  border:1px solid var(--line);
+  margin-top:12px;display:none;
+}
+
+/* form field */
+.field{margin-bottom:18px}
+.field label{
+  font-size:10px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--ink3);
+  display:block;margin-bottom:8px;
+}
+.field input,.field textarea,.field select{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:11px 14px;
+  font-size:13px;font-family:var(--fw-b);
+  color:var(--ink);
+  outline:none;
+  transition:border-color .2s,background .2s;
+}
+.field input:focus,.field textarea:focus{
+  border-color:var(--red);
+  background:var(--paper);
+}
+.field textarea{resize:vertical;min-height:100px;line-height:1.6}
+
+/* run button */
+.run-btn{
+  width:100%;padding:16px;
+  font-family:var(--fw-d);
+  font-size:22px;letter-spacing:3px;
+  border:none;border-radius:var(--r2);
+  background:var(--ink);color:var(--bg);
+  cursor:pointer;
+  position:relative;overflow:hidden;
+  transition:all .25s;
+}
+.run-btn::before{
+  content:'';
+  position:absolute;left:-100%;top:0;
+  width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);
+  transition:left .5s;
+}
+.run-btn:hover{background:var(--red);transform:translateY(-2px);box-shadow:0 8px 28px rgba(214,59,47,.3)}
+.run-btn:hover::before{left:100%}
+.run-btn:disabled{background:var(--bg3);color:var(--ink4);transform:none;box-shadow:none;cursor:not-allowed}
+.run-btn:disabled::before{display:none}
+
+/* RIGHT PANEL */
+.rp{
+  padding:40px;
+  display:flex;flex-direction:column;gap:28px;
+}
+
+/* SPINNER */
+.loading-block{
+  display:none;
+  flex-direction:column;
+  align-items:center;justify-content:center;
+  min-height:400px;gap:20px;
+}
+.loading-block.show{display:flex}
+.loader-track{
+  width:280px;height:3px;
+  background:var(--line);border-radius:3px;
+  overflow:hidden;
+}
+.loader-fill{
+  height:3px;background:var(--red);border-radius:3px;
+  animation:load-anim 1.8s ease-in-out infinite;
+}
+@keyframes load-anim{
+  0%{width:0%;margin-left:0}
+  50%{width:60%;margin-left:20%}
+  100%{width:0%;margin-left:100%}
+}
+.load-steps{display:flex;flex-direction:column;gap:8px;width:280px}
+.load-step{
+  display:flex;align-items:center;gap:10px;
+  font-size:12px;color:var(--ink3);
+  font-family:var(--fw-m);
+}
+.load-step .ls-icon{font-size:14px}
+
+/* EMPTY STATE */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:500px;gap:16px;
+  text-align:center;
+}
+.empty-state .es-icon{
+  font-size:64px;opacity:.2;
+  filter:grayscale(1);
+}
+.empty-state h3{
+  font-family:var(--fw-d);font-size:32px;
+  letter-spacing:2px;color:var(--ink3);opacity:.5;
+}
+.empty-state p{font-size:13px;color:var(--ink4);max-width:280px;line-height:1.6}
+
+/* RESULT AREA */
+#result-area{display:none;flex-direction:column;gap:20px}
+#result-area.show{display:flex}
+
+/* BIG SCORE BAR */
+.score-hero{
+  background:var(--ink);
+  color:var(--bg);
+  border-radius:var(--r3);
+  padding:32px;
+  display:flex;align-items:center;gap:32px;
+  position:relative;overflow:hidden;
+}
+.score-hero::after{
+  content:'SCORE';
+  position:absolute;right:24px;bottom:-18px;
+  font-family:var(--fw-d);font-size:100px;
+  color:rgba(255,255,255,.04);letter-spacing:4px;
+  pointer-events:none;
+}
+.sh-circle{
+  width:110px;height:110px;flex-shrink:0;
+  position:relative;
+}
+.sh-circle svg{
+  width:110px;height:110px;
+  transform:rotate(-90deg);
+}
+.sh-circle .ring-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
+.sh-circle .ring-fill{
+  fill:none;stroke:var(--red);stroke-width:8;
+  stroke-linecap:round;
+  stroke-dasharray:283;stroke-dashoffset:283;
+  transition:stroke-dashoffset 1.4s cubic-bezier(.16,1,.3,1);
+}
+.sh-center{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.sh-center .num{
+  font-family:var(--fw-d);font-size:32px;
+  letter-spacing:1px;color:#fff;line-height:1;
+}
+.sh-center .denom{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
+.sh-info{flex:1}
+.sh-grade{
+  font-family:var(--fw-d);font-size:72px;
+  letter-spacing:4px;color:#fff;line-height:1;
+  margin-bottom:8px;
+}
+.sh-tags{display:flex;gap:8px;flex-wrap:wrap}
+.sh-tag{
+  font-size:11px;font-family:var(--fw-m);
+  padding:4px 12px;border-radius:30px;
+  background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);
+  letter-spacing:.5px;
+}
+.sh-tag.hi{background:rgba(46,204,113,.15);color:#2ecc71}
+.sh-tag.mi{background:rgba(255,179,64,.15);color:#ffb340}
+.sh-tag.lo{background:rgba(214,59,47,.15);color:var(--red)}
+
+/* METRICS STRIP */
+.metrics-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:2px;
+  border-radius:var(--r2);overflow:hidden;
+  border:1px solid var(--line);
+}
+.metric-cell{
+  background:var(--paper);
+  padding:20px;text-align:center;
+  transition:background .2s;
+  cursor:default;
+}
+.metric-cell:hover{background:var(--bg2)}
+.metric-cell .mv{
+  font-family:var(--fw-d);font-size:38px;
+  letter-spacing:1px;color:var(--ink);
+  line-height:1;
+}
+.metric-cell .ml{
+  font-size:10px;font-weight:600;letter-spacing:2px;
+  text-transform:uppercase;color:var(--ink4);margin-top:6px;
+}
+
+/* BARS CARD */
+.bars-card{
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:var(--r2);
+  padding:24px;
+}
+.bars-card .bc-title{
+  font-size:10px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:var(--ink4);margin-bottom:20px;
+  display:flex;align-items:center;gap:8px;
+}
+.bars-card .bc-title::after{content:'';flex:1;height:1px;background:var(--line)}
+.bar-row{margin-bottom:18px}
+.bar-row:last-child{margin-bottom:0}
+.bar-meta{
+  display:flex;justify-content:space-between;
+  align-items:center;margin-bottom:8px;
+}
+.bar-meta .bm-name{font-size:13px;font-weight:500;color:var(--ink2)}
+.bar-meta .bm-val{
+  font-family:var(--fw-m);font-size:12px;font-weight:600;
+  color:var(--ink);
+  background:var(--bg);
+  padding:3px 10px;border-radius:4px;
+  border:1px solid var(--line);
+}
+.bar-track{
+  height:8px;background:var(--bg3);
+  border-radius:8px;overflow:hidden;
+}
+.bar-fill{
+  height:8px;border-radius:8px;
+  transition:width 1.3s cubic-bezier(.16,1,.3,1);
+}
+
+/* TWO-COL ROW */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media(max-width:1100px){.two-col{grid-template-columns:1fr}}
+
+/* KEYWORD PANEL */
+.kw-panel{
+  background:var(--paper);border:1px solid var(--line);
+  border-radius:var(--r2);padding:24px;
+}
+.kw-panel .kw-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.kw-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-family:var(--fw-m);font-weight:500;
+  padding:6px 14px;border-radius:4px;
+  transition:transform .15s;
+}
+.kw-chip:hover{transform:translateY(-2px)}
+.kw-f{background:var(--teal-soft);color:var(--teal);border:1px solid rgba(26,122,110,.18)}
+.kw-m{background:var(--red-soft);color:var(--red);border:1px solid var(--red-mid)}
+
+/* PRESENTATION PANEL */
+.pres-panel{
+  background:var(--paper);border:1px solid var(--line);
+  border-radius:var(--r2);padding:24px;
+}
+.pres-gauges{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+  margin-top:12px;
+}
+.gauge{
+  aspect-ratio:1;
+  background:var(--bg);border:1px solid var(--line);
+  border-radius:var(--r2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;padding:12px;
+  transition:border-color .2s;
+}
+.gauge:hover{border-color:var(--red)}
+.gauge .g-val{
+  font-family:var(--fw-d);font-size:30px;
+  letter-spacing:1px;color:var(--ink);
+}
+.gauge .g-lbl{
+  font-size:9px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--ink4);text-align:center;
+}
+.gauge .g-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--bg3);
+}
+
+/* OCR PANEL */
+.ocr-panel{
+  background:var(--ink);color:var(--bg);
+  border-radius:var(--r2);padding:24px;
+}
+.ocr-panel .oc-label{
+  font-size:9px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:rgba(255,255,255,.3);
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.ocr-panel .oc-label .oc-badge{
+  background:var(--red);color:#fff;padding:2px 8px;border-radius:3px;
+  font-size:8px;letter-spacing:1px;
+}
+.ocr-box{
+  font-family:var(--fw-m);font-size:12px;
+  color:rgba(255,255,255,.55);
+  white-space:pre-wrap;line-height:1.8;
+  max-height:160px;overflow-y:auto;
+}
+.ocr-box::-webkit-scrollbar{width:4px}
+.ocr-box::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+.engine-line{
+  font-size:10px;font-family:var(--fw-m);
+  color:rgba(255,255,255,.2);margin-top:12px;
+  display:flex;align-items:center;gap:6px;
+}
+.engine-line::before{
+  content:'';width:16px;height:1px;background:rgba(255,255,255,.15)
+}
+
+/* ══════════════════════════════════════════
+   PLAGIARISM PAGE
+══════════════════════════════════════════ */
+.plg-page{
+  display:grid;
+  grid-template-columns:400px 1fr;
+  min-height:calc(100vh - 64px);
+}
+@media(max-width:900px){.plg-page{grid-template-columns:1fr}}
+.plg-lp{
+  background:var(--paper);
+  border-right:1px solid var(--line);
+  padding:32px;
+  display:flex;flex-direction:column;gap:24px;
+}
+.plg-rp{padding:40px;display:flex;flex-direction:column;gap:20px}
+
+/* SIMILARITY ROWS */
+#plg-result{display:none}
+#plg-result.show{display:flex;flex-direction:column;gap:14px}
+.sim-row{
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:var(--r2);
+  padding:20px 24px;
+  display:flex;align-items:center;gap:20px;
+  transition:border-color .2s,transform .2s;
+  animation:slideIn .3s ease both;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.sim-row:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(26,22,18,.07)}
+.sim-row.flag{border-color:var(--red);background:rgba(214,59,47,.03)}
+.sim-pct{
+  font-family:var(--fw-d);font-size:40px;
+  letter-spacing:1px;min-width:80px;text-align:center;
+  line-height:1;
+}
+.sim-pct.hi{color:var(--red)}
+.sim-pct.md{color:var(--amber)}
+.sim-pct.lo{color:var(--teal)}
+.sim-bar-wrap{flex:1}
+.sim-names{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.sim-name{font-size:14px;font-weight:600;color:var(--ink2)}
+.sim-vs{
+  font-size:9px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--ink4);
+}
+.sim-mini-bar{
+  height:4px;background:var(--bg3);border-radius:4px;overflow:hidden;
+}
+.sim-fill{
+  height:4px;border-radius:4px;
+  transition:width 1s cubic-bezier(.16,1,.3,1);
+}
+.sim-badge{
+  font-size:10px;font-weight:700;font-family:var(--fw-m);
+  padding:6px 14px;border-radius:4px;letter-spacing:.5px;
+  white-space:nowrap;
+}
+.sim-badge.flag{background:var(--red-soft);color:var(--red);border:1px solid var(--red-mid)}
+.sim-badge.ok{background:var(--teal-soft);color:var(--teal);border:1px solid rgba(26,122,110,.18)}
+
+/* ══════════════════════════════════════════
+   ABOUT PAGE
+══════════════════════════════════════════ */
+.about-page{position:relative;z-index:1;padding:56px 60px}
+@media(max-width:800px){.about-page{padding:32px 24px}}
+
+.about-hero{
+  display:grid;grid-template-columns:1fr 1fr;gap:40px;
+  margin-bottom:56px;align-items:end;
+}
+@media(max-width:800px){.about-hero{grid-template-columns:1fr}}
+.about-hero h2{
+  font-family:var(--fw-d);font-size:72px;
+  letter-spacing:3px;line-height:1;
+  color:var(--ink);
+}
+.about-hero h2 em{color:var(--red);font-style:normal}
+.about-hero p{
+  font-size:15px;color:var(--ink3);line-height:1.75;
+  max-width:440px;
+}
+
+.steps-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:2px;
+  margin-bottom:40px;
+}
+@media(max-width:900px){.steps-grid{grid-template-columns:repeat(2,1fr)}}
+.step{
+  background:var(--paper);
+  padding:32px 24px;
+  border-top:3px solid var(--line);
+  transition:border-color .2s;
+  cursor:default;
+}
+.step:first-child{border-top-color:var(--red)}
+.step:hover{border-top-color:var(--red)}
+.step-n{
+  font-family:var(--fw-d);font-size:64px;
+  color:var(--bg3);line-height:1;margin-bottom:14px;
+  letter-spacing:2px;
+}
+.step-icon-big{font-size:28px;margin-bottom:12px}
+.step h4{
+  font-family:var(--fw-d);font-size:20px;letter-spacing:1px;
+  color:var(--ink);margin-bottom:10px;
+}
+.step p{font-size:13px;color:var(--ink3);line-height:1.65}
+
+.formula-section{
+  background:var(--ink);
+  border-radius:var(--r3);
+  padding:40px;
+  display:grid;grid-template-columns:200px 1fr;gap:40px;
+  margin-bottom:40px;
+}
+@media(max-width:700px){.formula-section{grid-template-columns:1fr}}
+.fs-label{
+  font-family:var(--fw-d);font-size:48px;
+  letter-spacing:2px;color:rgba(255,255,255,.15);
+  line-height:1;
+}
+.fs-formula{
+  font-family:var(--fw-m);font-size:13px;
+  color:rgba(255,255,255,.55);line-height:2.2;
+  border-left:2px solid var(--red);
+  padding-left:24px;
+}
+.fs-formula .hi{color:#fff;font-weight:600}
+
+.tech-section h3{
+  font-family:var(--fw-d);font-size:28px;letter-spacing:2px;
+  color:var(--ink);margin-bottom:18px;
+}
+.tech-list{display:flex;flex-wrap:wrap;gap:10px}
+.tech-pill{
+  font-family:var(--fw-m);font-size:12px;
+  padding:8px 18px;border-radius:4px;
+  background:var(--paper);border:1px solid var(--line);
+  color:var(--ink2);
+  transition:all .2s;cursor:default;
+}
+.tech-pill:hover{border-color:var(--red);color:var(--red);background:var(--red-soft)}
+
+/* ══════════════════════════════════════════
+   SHARED UTILITY
+══════════════════════════════════════════ */
+.panel-title{
+  font-size:9px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;color:var(--ink4);
+  margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.panel-title::after{content:'';flex:1;height:1px;background:var(--line)}
+
+.file-count-note{font-size:12px;font-family:var(--fw-m);color:var(--red);margin-bottom:12px}
+
+.spinner-page{
+  display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  min-height:400px;gap:24px;
+}
+.spinner-page.show{display:flex}
+.sp-ring{
+  width:52px;height:52px;border-radius:50%;
+  border:3px solid var(--line);
+  border-top-color:var(--red);
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sp-text{font-size:12px;font-family:var(--fw-m);color:var(--ink3);text-align:center;line-height:1.8}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <div class="mark">📝</div>
+    <div>
+      <div class="wordmark">NEXUS EVAL</div>
+      <div class="sub">Smart Evaluation System</div>
+    </div>
+  </div>
+  <nav class="hdr-nav">
+    <div class="hdr-tab on"  onclick="gotoPage('eval',this)">
+      <span class="tab-dot"></span>Evaluate Answer
+    </div>
+    <div class="hdr-tab" onclick="gotoPage('plg',this)">
+      <span class="tab-dot"></span>Plagiarism Check
+    </div>
+    <div class="hdr-tab" onclick="gotoPage('about',this)">
+      <span class="tab-dot"></span>About
+    </div>
+  </nav>
+  <div class="hdr-right">
+    <div class="status-dot"></div>
+    <span class="status-txt">SYSTEM READY</span>
+  </div>
+</header>
+
+<!-- ═══════════════ EVALUATE PAGE ═══════════════ -->
+<div class="page on" id="page-eval">
+  <div class="eval-wrap">
+
+    <!-- LEFT -->
+    <aside class="lp">
+      <div>
+        <div class="sec-label">Answer Sheet</div>
+        <div class="upload-z" onclick="document.getElementById('image-input').click()">
+          <span class="uz-emoji">🖼</span>
+          <div class="uz-h">Upload Handwritten Sheet</div>
+          <div class="uz-s">PNG · JPG · JPEG</div>
+        </div>
+        <input type="file" id="image-input" accept="image/*" onchange="previewImg(this)"/>
+        <img id="preview" class="preview-img" alt=""/>
+      </div>
+
+      <div>
+        <div class="sec-label">Configuration</div>
+        <div class="field">
+          <label>Max Marks</label>
+          <input type="number" id="max-marks" value="10" min="1" max="100"/>
+        </div>
+        <div class="field">
+          <label>Keywords <span style="text-transform:none;font-weight:400;opacity:.6">(comma separated)</span></label>
+          <input type="text" id="keywords" placeholder="svm, classification, hyperplane …"/>
+        </div>
+        <div class="field">
+          <label>Reference Answer</label>
+          <textarea id="reference" placeholder="Paste the model / teacher answer here…"></textarea>
+        </div>
+      </div>
+
+      <button class="run-btn" id="eval-btn" onclick="runEval()">RUN EVALUATION</button>
+    </aside>
+
+    <!-- RIGHT -->
+    <main class="rp">
+
+      <!-- empty -->
+      <div class="empty-state" id="eval-empty">
+        <div class="es-icon">📋</div>
+        <h3>NO RESULT YET</h3>
+        <p>Upload an answer sheet, set your configuration, and hit Run Evaluation to see results here.</p>
+      </div>
+
+      <!-- loading -->
+      <div class="loading-block" id="eval-loading">
+        <div class="loader-track"><div class="loader-fill"></div></div>
+        <div class="load-steps">
+          <div class="load-step"><span class="ls-icon">🔬</span> Preprocessing image (grayscale + Otsu)</div>
+          <div class="load-step"><span class="ls-icon">🔠</span> Extracting text via Tesseract OCR</div>
+          <div class="load-step"><span class="ls-icon">🧠</span> Running BERT semantic encoding</div>
+          <div class="load-step"><span class="ls-icon">🔑</span> Checking keyword coverage</div>
+          <div class="load-step"><span class="ls-icon">📊</span> Analyzing presentation quality</div>
+        </div>
+      </div>
+
+      <!-- results -->
+      <div id="result-area">
+
+        <!-- score hero -->
+        <div class="score-hero">
+          <div class="sh-circle">
+            <svg viewBox="0 0 110 110">
+              <circle class="ring-bg" cx="55" cy="55" r="45"/>
+              <circle class="ring-fill" id="ring-fill" cx="55" cy="55" r="45"/>
+            </svg>
+            <div class="sh-center">
+              <div class="num" id="r-total">—</div>
+              <div class="denom" id="r-denom">/ 10</div>
+            </div>
+          </div>
+          <div class="sh-info">
+            <div class="sh-grade" id="r-grade">—</div>
+            <div class="sh-tags">
+              <span class="sh-tag" id="tag-sem">SEM —</span>
+              <span class="sh-tag" id="tag-kw">KW —</span>
+              <span class="sh-tag" id="tag-pres">PRES —</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- metrics strip -->
+        <div class="metrics-strip">
+          <div class="metric-cell">
+            <div class="mv" id="mc-content">—</div>
+            <div class="ml">Content Marks</div>
+          </div>
+          <div class="metric-cell">
+            <div class="mv" id="mc-pres">—</div>
+            <div class="ml">Presentation</div>
+          </div>
+          <div class="metric-cell">
+            <div class="mv" id="mc-engine">—</div>
+            <div class="ml">Engine</div>
+          </div>
+        </div>
+
+        <!-- bars -->
+        <div class="bars-card">
+          <div class="bc-title">Score Breakdown</div>
+          <div class="bar-row">
+            <div class="bar-meta">
+              <span class="bm-name">Semantic Similarity (BERT)</span>
+              <span class="bm-val" id="bv-sem">—</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="bf-sem" style="width:0%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-meta">
+              <span class="bm-name">Keyword Coverage</span>
+              <span class="bm-val" id="bv-kw">—</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="bf-kw" style="width:0%"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-meta">
+              <span class="bm-name">Answer Length Score</span>
+              <span class="bm-val" id="bv-len">—</span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="bf-len" style="width:0%"></div></div>
+          </div>
+        </div>
+
+        <!-- two col: keywords + presentation -->
+        <div class="two-col">
+          <div class="kw-panel">
+            <div class="panel-title">Keyword Analysis</div>
+            <div class="kw-tags" id="kw-tags"></div>
+          </div>
+          <div class="pres-panel">
+            <div class="panel-title">Presentation Metrics</div>
+            <div class="pres-gauges">
+              <div class="gauge">
+                <div class="g-val" id="g-clarity">—</div>
+                <div class="g-dot" id="gd-clarity"></div>
+                <div class="g-lbl">Clarity</div>
+              </div>
+              <div class="gauge">
+                <div class="g-val" id="g-ink">—</div>
+                <div class="g-dot" id="gd-ink"></div>
+                <div class="g-lbl">Ink Density</div>
+              </div>
+              <div class="gauge">
+                <div class="g-val" id="g-align">—</div>
+                <div class="g-dot" id="gd-align"></div>
+                <div class="g-lbl">Alignment</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- OCR -->
+        <div class="ocr-panel">
+          <div class="oc-label">
+            <span class="oc-badge">TESSERACT</span>
+            Extracted Text
+          </div>
+          <div class="ocr-box" id="ocr-text"></div>
+          <div class="engine-line">SEMANTIC ENGINE: <span id="eng-name">—</span></div>
+        </div>
+
+      </div><!-- /result-area -->
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════ PLAGIARISM PAGE ═══════════════ -->
+<div class="page" id="page-plg">
+  <div class="plg-page">
+    <aside class="plg-lp">
+      <div class="sec-label">Upload Sheets</div>
+      <div class="upload-z" onclick="document.getElementById('multi-input').click()">
+        <span class="uz-emoji">📂</span>
+        <div class="uz-h">Upload Multiple Answer Sheets</div>
+        <div class="uz-s">Select 2 or more images</div>
+      </div>
+      <input type="file" id="multi-input" accept="image/*" multiple onchange="countFiles(this)"/>
+      <p class="file-count-note" id="file-count"></p>
+      <p style="font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:4px">
+        The system extracts text from each sheet using Tesseract OCR, then computes BERT cosine similarity between every pair and flags high-similarity submissions.
+      </p>
+      <button class="run-btn" id="plg-btn" onclick="runPlg()">RUN PLAGIARISM CHECK</button>
+    </aside>
+
+    <main class="plg-rp">
+      <div class="empty-state" id="plg-empty">
+        <div class="es-icon">🔍</div>
+        <h3>AWAITING UPLOAD</h3>
+        <p>Upload two or more answer sheets and run the check to see pairwise similarity scores.</p>
+      </div>
+
+      <div class="spinner-page" id="plg-loading">
+        <div class="sp-ring"></div>
+        <div class="sp-text">Extracting text from all sheets…<br/>Computing BERT similarity matrix…</div>
+      </div>
+
+      <div id="plg-result">
+        <div class="panel-title" style="margin-bottom:20px">Similarity Report</div>
+        <div id="plg-rows"></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════ ABOUT PAGE ═══════════════ -->
+<div class="page" id="page-about">
+  <div class="about-page">
+    <div class="about-hero">
+      <div>
+        <h2>HOW<br/>NEXUS<br/><em>EVAL</em><br/>WORKS</h2>
+      </div>
+      <div>
+        <p>Nexus Eval is an AI-powered automated answer sheet evaluation system combining computer vision, natural language processing, and handwriting analysis to deliver objective, consistent, and fast assessments at scale.</p>
+      </div>
+    </div>
+
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-n">01</div>
+        <div class="step-icon-big">🖼</div>
+        <h4>OCR EXTRACTION</h4>
+        <p>Tesseract OCR reads handwritten sheets after preprocessing — grayscale, Gaussian blur, Otsu thresholding — for maximum text accuracy.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">02</div>
+        <div class="step-icon-big">🧠</div>
+        <h4>BERT SEMANTICS</h4>
+        <p>SentenceTransformer (all-MiniLM-L6-v2) encodes student and reference answers. Cosine similarity measures conceptual alignment.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">03</div>
+        <div class="step-icon-big">🔑</div>
+        <h4>KEYWORD CHECK</h4>
+        <p>Key topic words are verified against the student answer. Missing keywords reduce the score; found ones confirm topic coverage.</p>
+      </div>
+      <div class="step">
+        <div class="step-n">04</div>
+        <div class="step-icon-big">📊</div>
+        <h4>PRESENTATION AI</h4>
+        <p>OpenCV analyzes Laplacian variance (clarity), ink density, and line alignment — scoring handwriting presentation quality.</p>
+      </div>
+    </div>
+
+    <div class="formula-section">
+      <div class="fs-label">FORMULA</div>
+      <pre class="fs-formula"><span class="hi">Content Score</span>  =  (0.60 × Semantic) + (0.25 × Keyword) + (0.15 × Length)  ×  MaxMarks
+<span class="hi">Presentation</span>   =  (0.40 × Clarity)  + (0.30 × InkDensity) + (0.30 × Alignment)  ×  2
+<span class="hi">Total Score</span>    =  Content Score + Presentation Score</pre>
+    </div>
+
+    <div class="tech-section">
+      <h3>TECH STACK</h3>
+      <div class="tech-list">
+        <span class="tech-pill">Python / Flask</span>
+        <span class="tech-pill">Tesseract OCR</span>
+        <span class="tech-pill">sentence-transformers (BERT)</span>
+        <span class="tech-pill">OpenCV</span>
+        <span class="tech-pill">scikit-learn</span>
+        <span class="tech-pill">HTML / CSS / JS</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SCRIPTS ═══════════════ -->
+<script>
+/* ── PAGE NAV ── */
+function gotoPage(name,el){
+  document.querySelectorAll('.hdr-tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('page-'+name).classList.add('on');
+}
+
+/* ── IMAGE PREVIEW ── */
+function previewImg(inp){
+  const f=inp.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{const i=document.getElementById('preview');i.src=e.target.result;i.style.display='block'};
+  r.readAsDataURL(f);
+}
+function countFiles(inp){
+  document.getElementById('file-count').textContent=inp.files.length+' file(s) selected';
+}
+
+/* ── HELPERS ── */
+function barColor(v){return v>=.75?'#1a7a6e':v>=.5?'#c97c10':'#d63b2f'}
+function setBar(bfId,bvId,v){
+  const pct=Math.round(v*100);
+  document.getElementById(bfId).style.width=pct+'%';
+  document.getElementById(bfId).style.background=barColor(v);
+  document.getElementById(bvId).textContent=pct+'%';
+}
+function setGaugeDot(dotId,v){
+  const el=document.getElementById(dotId);
+  el.style.background=v>=.75?'#1a7a6e':v>=.5?'#c97c10':'#d63b2f';
+}
+function tagClass(v){return v>=.75?'hi':v>=.5?'mi':'lo'}
+
+/* ── EVALUATE ── */
+async function runEval(){
+  const imgIn=document.getElementById('image-input');
+  const ref=document.getElementById('reference').value.trim();
+  const kw=document.getElementById('keywords').value.trim();
+  const mx=document.getElementById('max-marks').value;
+  if(!imgIn.files[0]){alert('Please upload an answer sheet.');return}
+  if(!ref){alert('Please enter the reference answer.');return}
+
+  document.getElementById('eval-btn').disabled=true;
+  document.getElementById('eval-empty').style.display='none';
+  document.getElementById('result-area').style.display='none';
+  document.getElementById('eval-loading').classList.add('show');
+
+  const fd=new FormData();
+  fd.append('image',imgIn.files[0]);
+  fd.append('reference',ref);
+  fd.append('keywords',kw);
+  fd.append('max_marks',mx);
+
+  try{
+    const res=await fetch('/evaluate',{method:'POST',body:fd});
+    const d=await res.json();
+    if(d.error){alert('Error: '+d.error);return}
+
+    const c=d.content,p=d.presentation;
+
+    // circle ring
+    const circumference=2*Math.PI*45;
+    const pct=(d.total_score/d.max_marks);
+    const offset=circumference*(1-Math.min(pct,1));
+    document.getElementById('ring-fill').style.strokeDashoffset=offset;
+
+    document.getElementById('r-total').textContent=d.total_score;
+    document.getElementById('r-denom').textContent='/ '+d.max_marks;
+    document.getElementById('r-grade').textContent=d.grade;
+
+    // tags
+    const ts=t=>tagClass(t);
+    document.getElementById('tag-sem').textContent='SEM '+Math.round(c.semantic_score*100)+'%';
+    document.getElementById('tag-sem').className='sh-tag '+ts(c.semantic_score);
+    document.getElementById('tag-kw').textContent='KW '+Math.round(c.keyword_score*100)+'%';
+    document.getElementById('tag-kw').className='sh-tag '+ts(c.keyword_score);
+    document.getElementById('tag-pres').textContent='PRES '+p.total;
+    document.getElementById('tag-pres').className='sh-tag hi';
+
+    // metric strip
+    document.getElementById('mc-content').textContent=c.marks;
+    document.getElementById('mc-pres').textContent=p.total;
+    document.getElementById('mc-engine').textContent=(d.semantic_mode||'BERT').toUpperCase();
+    document.getElementById('eng-name').textContent=(d.semantic_mode||'transformer').toUpperCase();
+
+    // bars
+    setBar('bf-sem','bv-sem',c.semantic_score);
+    setBar('bf-kw','bv-kw',c.keyword_score);
+    setBar('bf-len','bv-len',c.length_score);
+
+    // keywords
+    let khtml='';
+    (c.found_keywords||[]).forEach(k=>khtml+=`<span class="kw-chip kw-f">✔ ${k}</span>`);
+    (c.missing_keywords||[]).forEach(k=>khtml+=`<span class="kw-chip kw-m">✘ ${k}</span>`);
+    document.getElementById('kw-tags').innerHTML=khtml||'<span style="font-size:12px;color:var(--ink4)">No keywords specified</span>';
+
+    // gauges
+    document.getElementById('g-clarity').textContent=p.clarity;
+    document.getElementById('g-ink').textContent=p.ink_density;
+    document.getElementById('g-align').textContent=p.alignment;
+
+    // ocr
+    document.getElementById('ocr-text').textContent=d.extracted_text||'(No text extracted)';
+
+    document.getElementById('result-area').style.display='flex';
+  }catch(e){
+    alert('Connection error: Is Flask running? ('+e.message+')');
+  }finally{
+    document.getElementById('eval-loading').classList.remove('show');
+    document.getElementById('eval-btn').disabled=false;
+  }
+}
+
+/* ── PLAGIARISM ── */
+async function runPlg(){
+  const inp=document.getElementById('multi-input');
+  if(inp.files.length<2){alert('Please upload at least 2 sheets.');return}
+  document.getElementById('plg-btn').disabled=true;
+  document.getElementById('plg-empty').style.display='none';
+  document.getElementById('plg-result').classList.remove('show');
+  document.getElementById('plg-loading').classList.add('show');
+
+  const fd=new FormData();
+  for(const f of inp.files) fd.append('images',f);
+
+  try{
+    const res=await fetch('/plagiarism',{method:'POST',body:fd});
+    const d=await res.json();
+    if(d.error){alert('Error: '+d.error);return}
+
+    let html='';
+    d.results.forEach((r,i)=>{
+      const pct=Math.round(r.similarity*100);
+      const cls=r.similarity>.9?'hi':r.similarity>.6?'md':'lo';
+      const fcls=r.flagged?'flag':'';
+      const badge=r.flagged
+        ?'<span class="sim-badge flag">⚠ POSSIBLE COPY</span>'
+        :'<span class="sim-badge ok">✔ ORIGINAL</span>';
+      const fillColor=r.similarity>.9?'#d63b2f':r.similarity>.6?'#c97c10':'#1a7a6e';
+      html+=`<div class="sim-row ${fcls}" style="animation-delay:${i*0.07}s">
+        <div class="sim-pct ${cls}">${pct}%</div>
+        <div class="sim-bar-wrap">
+          <div class="sim-names">
+            <span class="sim-name">${r.student_a}</span>
+            <span class="sim-vs">VS</span>
+            <span class="sim-name">${r.student_b}</span>
+          </div>
+          <div class="sim-mini-bar">
+            <div class="sim-fill" style="width:0%;background:${fillColor}" data-w="${pct}"></div>
+          </div>
+        </div>
+        ${badge}
+      </div>`;
+    });
+    document.getElementById('plg-rows').innerHTML=html;
+    document.getElementById('plg-result').classList.add('show');
+
+    // animate mini bars
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>{
+        document.querySelectorAll('.sim-fill').forEach(el=>{
+          el.style.transition='width 1s cubic-bezier(.16,1,.3,1)';
+          el.style.width=el.dataset.w+'%';
+        });
+      });
+    });
+  }catch(e){
+    alert('Connection error: Is Flask running? ('+e.message+')');
+  }finally{
+    document.getElementById('plg-loading').classList.remove('show');
+    document.getElementById('plg-btn').disabled=false;
+  }
+}
+</script>
+</body>
+</html>
+
+    <!-- ═══════════════ EVALUATE TAB ═══════════════ -->
+    <div class="tab-content active" id="tab-evaluate">
+      <div class="container">
+        <div class="grid-2">
+          <!-- LEFT: Inputs -->
+          <div>
+            <div class="card" style="margin-bottom: 20px">
+              <h3>
+                <span class="icon" style="background: #ede9fe">📤</span> Upload
+                Answer Sheet
+              </h3>
+              <div
+                class="upload-box"
+                onclick="document.getElementById('image-input').click()"
+              >
+                <div class="upload-icon">🖼️</div>
+                <p>Click to upload handwritten answer sheet</p>
+                <span>PNG, JPG, JPEG supported</span>
+              </div>
+              <input
+                type="file"
+                id="image-input"
+                accept="image/*"
+                onchange="previewImage(this)"
+              />
+              <img id="preview" class="preview-img" alt="Preview" />
+            </div>
+
+            <div class="card">
+              <h3>
+                <span class="icon" style="background: #dcfce7">⚙️</span>
+                Evaluation Settings
+              </h3>
+              <label>Max Marks</label>
+              <input
+                type="number"
+                id="max-marks"
+                value="10"
+                min="1"
+                max="100"
+              />
+
+              <label>Keywords (comma separated)</label>
+              <input
+                type="text"
+                id="keywords"
+                placeholder="e.g. svm, classification, hyperplane, kernel"
+              />
+
+              <label>Reference Answer</label>
+              <textarea
+                id="reference"
+                placeholder="Paste the model/teacher answer here..."
+              ></textarea>
+
+              <button class="btn" id="eval-btn" onclick="evaluate()">
+                🚀 Evaluate Answer
+              </button>
+            </div>
+          </div>
+
+          <!-- RIGHT: Results -->
+          <div>
+            <div class="spinner-wrap" id="eval-spinner">
+              <div class="spinner"></div>
+              <p>
+                Extracting text with OCR...<br />Running BERT semantic
+                analysis...
+              </p>
+            </div>
+
+            <div id="result-area">
+              <!-- Score Overview -->
+              <div class="card" style="margin-bottom: 16px">
+                <h3>
+                  <span class="icon" style="background: #dbeafe">🏆</span>
+                  Overall Result
+                </h3>
+                <div class="score-grid">
+                  <div class="score-metric">
+                    <div class="val" id="r-total">—</div>
+                    <div class="lbl">Total Score</div>
+                  </div>
+                  <div class="score-metric">
+                    <div class="val" id="r-grade">—</div>
+                    <div class="lbl">Grade</div>
+                  </div>
+                  <div class="score-metric">
+                    <div class="val" id="r-content">—</div>
+                    <div class="lbl">Content</div>
+                  </div>
+                  <div class="score-metric">
+                    <div class="val" id="r-pres">—</div>
+                    <div class="lbl">Presentation</div>
+                  </div>
+                </div>
+
+                <!-- Score bars -->
+                <div class="progress-item">
+                  <div class="progress-label">
+                    <span>Semantic Similarity (BERT)</span
+                    ><span id="b-sem">0%</span>
+                  </div>
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      id="p-sem"
+                      style="width: 0%; background: #4f46e5"
+                    ></div>
+                  </div>
+                </div>
+                <div class="progress-item">
+                  <div class="progress-label">
+                    <span>Keyword Coverage</span><span id="b-kw">0%</span>
+                  </div>
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      id="p-kw"
+                      style="width: 0%; background: #7c3aed"
+                    ></div>
+                  </div>
+                </div>
+                <div class="progress-item">
+                  <div class="progress-label">
+                    <span>Answer Length</span><span id="b-len">0%</span>
+                  </div>
+                  <div class="progress-track">
+                    <div
+                      class="progress-fill"
+                      id="p-len"
+                      style="width: 0%; background: #6366f1"
+                    ></div>
+                  </div>
+                </div>
+                <p style="font-size: 12px; color: #64748b; margin-top: 10px">
+                  Semantic Engine: <strong id="semantic-mode">—</strong>
+                </p>
+              </div>
+
+              <!-- Keywords -->
+              <div class="card" style="margin-bottom: 16px">
+                <h3>
+                  <span class="icon" style="background: #fef9c3">🔑</span>
+                  Keyword Analysis
+                </h3>
+                <div id="keyword-tags"></div>
+              </div>
+
+              <!-- Presentation -->
+              <div class="card" style="margin-bottom: 16px">
+                <h3>
+                  <span class="icon" style="background: #fce7f3">📊</span>
+                  Presentation Score
+                </h3>
+                <div class="pres-grid">
+                  <div class="pres-metric">
+                    <div class="val" id="p-clarity">—</div>
+                    <div class="lbl">Clarity</div>
+                  </div>
+                  <div class="pres-metric">
+                    <div class="val" id="p-ink">—</div>
+                    <div class="lbl">Ink Density</div>
+                  </div>
+                  <div class="pres-metric">
+                    <div class="val" id="p-align">—</div>
+                    <div class="lbl">Alignment</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- OCR Text -->
+              <div class="card">
+                <h3>
+                  <span class="icon" style="background: #ecfdf5">📄</span>
+                  Extracted Text (OCR)
+                </h3>
+                <div class="ocr-box" id="ocr-text"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ PLAGIARISM TAB ═══════════════ -->
+    <div class="tab-content" id="tab-plagiarism">
+      <div class="container">
+        <div class="grid-2">
+          <div>
+            <div class="card">
+              <h3>
+                <span class="icon" style="background: #fee2e2">🔍</span>
+                Plagiarism Detection
+              </h3>
+              <p style="font-size: 13px; color: #6b7280; margin-bottom: 16px">
+                Upload 2 or more answer sheets. The system will compare them
+                using BERT embeddings and flag possible copying.
+              </p>
+              <div
+                class="upload-box"
+                onclick="document.getElementById('multi-input').click()"
+              >
+                <div class="upload-icon">📂</div>
+                <p>Click to upload multiple answer sheets</p>
+                <span>Select 2 or more images</span>
+              </div>
+              <input
+                type="file"
+                id="multi-input"
+                accept="image/*"
+                multiple
+                onchange="showFileCount(this)"
+              />
+              <p
+                id="file-count"
+                style="font-size: 13px; color: #4f46e5; margin-bottom: 14px"
+              ></p>
+              <button class="btn" id="plg-btn" onclick="checkPlagiarism()">
+                🔍 Check Plagiarism
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <div class="spinner-wrap" id="plg-spinner">
+              <div class="spinner"></div>
+              <p>
+                Extracting text from all sheets...<br />Computing BERT
+                similarity matrix...
+              </p>
+            </div>
+
+            <div id="plagiarism-result">
+              <div class="card">
+                <h3>
+                  <span class="icon" style="background: #fee2e2">🔍</span>
+                  Similarity Report
+                </h3>
+                <div id="plg-rows"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ ABOUT TAB ═══════════════ -->
+    <div class="tab-content" id="tab-about">
+      <div class="container">
+        <div class="card">
+          <h3>
+            <span class="icon" style="background: #ede9fe">ℹ</span> How It Works
+          </h3>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+              gap: 16px;
+              margin-top: 10px;
+            "
+          >
+            <div
+              style="background: #f5f3ff; border-radius: 12px; padding: 1.2rem"
+            >
+              <div style="font-size: 28px; margin-bottom: 8px">🖼️</div>
+              <strong>Step 1: OCR</strong>
+              <p style="font-size: 13px; color: #6b7280; margin-top: 6px">
+                Tesseract OCR reads the handwritten answer sheet image and
+                extracts text after preprocessing (grayscale, Gaussian blur,
+                Otsu thresholding).
+              </p>
+            </div>
+            <div
+              style="background: #f0fdf4; border-radius: 12px; padding: 1.2rem"
+            >
+              <div style="font-size: 28px; margin-bottom: 8px">🧠</div>
+              <strong>Step 2: BERT Semantics</strong>
+              <p style="font-size: 13px; color: #6b7280; margin-top: 6px">
+                SentenceTransformer (all-MiniLM-L6-v2) encodes both the student
+                and reference answers. Cosine similarity measures how close the
+                meanings are.
+              </p>
+            </div>
+            <div
+              style="background: #fef9c3; border-radius: 12px; padding: 1.2rem"
+            >
+              <div style="font-size: 28px; margin-bottom: 8px">🔑</div>
+              <strong>Step 3: Keyword Check</strong>
+              <p style="font-size: 13px; color: #6b7280; margin-top: 6px">
+                Key topic words are checked against the student answer. Missing
+                keywords reduce the score. Found keywords confirm topic
+                coverage.
+              </p>
+            </div>
+            <div
+              style="background: #fce7f3; border-radius: 12px; padding: 1.2rem"
+            >
+              <div style="font-size: 28px; margin-bottom: 8px">📊</div>
+              <strong>Step 4: Presentation</strong>
+              <p style="font-size: 13px; color: #6b7280; margin-top: 6px">
+                OpenCV analyzes the image for clarity (Laplacian variance), ink
+                density, and line alignment — giving a handwriting quality
+                bonus.
+              </p>
+            </div>
+          </div>
+
+          <div
+            style="
+              margin-top: 24px;
+              background: #f8fafc;
+              border-radius: 12px;
+              padding: 1.2rem;
+            "
+          >
+            <strong style="font-size: 14px"
+              >Scoring Formula (from notebook):</strong
+            >
+            <pre
+              style="
+                font-size: 13px;
+                color: #4b5563;
+                margin-top: 10px;
+                line-height: 1.8;
+              "
+            >
+Content Score  = (0.60 × Semantic) + (0.25 × Keyword) + (0.15 × Length) × MaxMarks
+Presentation   = (0.40 × Clarity) + (0.30 × InkDensity) + (0.30 × Alignment) × 2
+Total Score    = Content Score + Presentation Score</pre
+            >
+          </div>
+
+          <div style="margin-top: 20px">
+            <strong style="font-size: 14px">Tech Stack:</strong>
+            <div
+              style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px"
+            >
+              <span
+                style="
+                  background: #ede9fe;
+                  color: #4f46e5;
+                  padding: 5px 14px;
+                  border-radius: 20px;
+                  font-size: 13px;
+                "
+                >Python / Flask</span
+              >
+              <span
+                style="
+                  background: #dcfce7;
+                  color: #166534;
+                  padding: 5px 14px;
+                  border-radius: 20px;
+                  font-size: 13px;
+                "
+                >Tesseract OCR</span
+              >
+              <span
+                style="
+                  background: #dbeafe;
+                  color: #1e40af;
+                  padding: 5px 14px;
+                  border-radius: 20px;
+                  font-size: 13px;
+                "
+                >sentence-transformers (BERT)</span
+              >
+              <span
+                style="
+                  background: #fef9c3;
+                  color: #92400e;
+                  padding: 5px 14px;
+                  border-radius: 20px;
+                  font-size: 13px;
+                "
+                >OpenCV</span
+              >
+              <span
+                style="
+                  background: #fce7f3;
+                  color: #9d174d;
+                  padding: 5px 14px;
+                  border-radius: 20px;
+                  font-size: 13px;
+                "
+                >scikit-learn</span
+              >
+              <span
+                style="
+                  background: #f3f4f6;
+                  color: #374151;
+                  padding: 5px 14px;
+                  border-radius: 20px;
+                  font-size: 13px;
+                "
+                >HTML / CSS / JS</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ── TAB SWITCHING ──
+      function switchTab(name, tabEl) {
+        document
+          .querySelectorAll(".tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((t) => t.classList.remove("active"));
+        document.getElementById("tab-" + name).classList.add("active");
+        tabEl.classList.add("active");
+      }
+
+      // ── IMAGE PREVIEW ──
+      function previewImage(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = document.getElementById("preview");
+          img.src = e.target.result;
+          img.style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function showFileCount(input) {
+        const n = input.files.length;
+        document.getElementById("file-count").textContent =
+          n + " file(s) selected";
+      }
+
+      // ── PROGRESS BAR HELPER ──
+      function setBar(fillId, labelId, val) {
+        const pct = Math.round(val * 100);
+        document.getElementById(fillId).style.width = pct + "%";
+        document.getElementById(labelId).textContent = pct + "%";
+      }
+
+      function barColor(val) {
+        if (val >= 0.75) return "#16a34a";
+        if (val >= 0.5) return "#d97706";
+        return "#dc2626";
+      }
+
+      // ── EVALUATE ──
+      async function evaluate() {
+        const imageInput = document.getElementById("image-input");
+        const ref = document.getElementById("reference").value.trim();
+        const keywords = document.getElementById("keywords").value.trim();
+        const maxMarks = document.getElementById("max-marks").value;
+
+        if (!imageInput.files[0]) {
+          alert("Please upload an answer sheet image.");
+          return;
+        }
+        if (!ref) {
+          alert("Please enter the reference answer.");
+          return;
+        }
+
+        document.getElementById("eval-btn").disabled = true;
+        document.getElementById("eval-spinner").style.display = "block";
+        document.getElementById("result-area").style.display = "none";
+
+        const formData = new FormData();
+        formData.append("image", imageInput.files[0]);
+        formData.append("reference", ref);
+        formData.append("keywords", keywords);
+        formData.append("max_marks", maxMarks);
+
+        try {
+          const res = await fetch("/evaluate", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+
+          if (data.error) {
+            alert("Error: " + data.error);
+            return;
+          }
+
+          const c = data.content;
+          const p = data.presentation;
+
+          // Scores
+          document.getElementById("r-total").textContent =
+            data.total_score + " / " + data.max_marks;
+          document.getElementById("r-grade").textContent = data.grade;
+          document.getElementById("r-content").textContent = c.marks;
+          document.getElementById("r-pres").textContent = p.total;
+          document.getElementById("semantic-mode").textContent = (
+            data.semantic_mode || "transformer"
+          ).toUpperCase();
+
+          // Progress bars
+          setBar("p-sem", "b-sem", c.semantic_score);
+          document.getElementById("p-sem").style.background = barColor(
+            c.semantic_score,
+          );
+          setBar("p-kw", "b-kw", c.keyword_score);
+          document.getElementById("p-kw").style.background = barColor(
+            c.keyword_score,
+          );
+          setBar("p-len", "b-len", c.length_score);
+          document.getElementById("p-len").style.background = barColor(
+            c.length_score,
+          );
+
+          // Keywords
+          let khtml = "";
+          (c.found_keywords || []).forEach(
+            (k) => (khtml += `<span class="kw-tag kw-found">✔ ${k}</span>`),
+          );
+          (c.missing_keywords || []).forEach(
+            (k) => (khtml += `<span class="kw-tag kw-missing">✘ ${k}</span>`),
+          );
+          document.getElementById("keyword-tags").innerHTML =
+            khtml ||
+            '<span style="color:#9ca3af;font-size:13px;">No keywords specified</span>';
+
+          // Presentation
+          document.getElementById("p-clarity").textContent = p.clarity;
+          document.getElementById("p-ink").textContent = p.ink_density;
+          document.getElementById("p-align").textContent = p.alignment;
+
+          // OCR text
+          document.getElementById("ocr-text").textContent =
+            data.extracted_text || "(No text extracted)";
+
+          document.getElementById("result-area").style.display = "block";
+        } catch (e) {
+          alert("Connection error: Is Flask running? (" + e.message + ")");
+        } finally {
+          document.getElementById("eval-spinner").style.display = "none";
+          document.getElementById("eval-btn").disabled = false;
+        }
+      }
+
+      // ── PLAGIARISM ──
+      async function checkPlagiarism() {
+        const input = document.getElementById("multi-input");
+        if (input.files.length < 2) {
+          alert("Please upload at least 2 answer sheets.");
+          return;
+        }
+
+        document.getElementById("plg-btn").disabled = true;
+        document.getElementById("plg-spinner").style.display = "block";
+        document.getElementById("plagiarism-result").style.display = "none";
+
+        const formData = new FormData();
+        for (const f of input.files) formData.append("images", f);
+
+        try {
+          const res = await fetch("/plagiarism", {
+            method: "POST",
+            body: formData,
+          });
+          const data = await res.json();
+
+          if (data.error) {
+            alert("Error: " + data.error);
+            return;
+          }
+
+          let html = "";
+          data.results.forEach((r) => {
+            const pct = Math.round(r.similarity * 100);
+            const cls =
+              r.similarity > 0.9 ? "high" : r.similarity > 0.6 ? "med" : "low";
+            const rowCls = r.flagged ? "flagged" : "";
+            const badge = r.flagged
+              ? '<span class="flag-badge">⚠ Possible Copying</span>'
+              : '<span class="ok-badge">✔ OK</span>';
+            html += `<div class="plg-row ${rowCls}">
+        <div class="plg-score ${cls}">${pct}%</div>
+        <div class="plg-names">
+          <strong>${r.student_a}</strong>
+          <span style="font-size:11px;color:#9ca3af;">vs</span>
+          <strong>${r.student_b}</strong>
+        </div>
+        ${badge}
+      </div>`;
+          });
+
+          document.getElementById("plg-rows").innerHTML = html;
+          document.getElementById("plagiarism-result").style.display = "block";
+        } catch (e) {
+          alert("Connection error: Is Flask running? (" + e.message + ")");
+        } finally {
+          document.getElementById("plg-spinner").style.display = "none";
+          document.getElementById("plg-btn").disabled = false;
+        }
+      }
+    </script>
+  </body>
+</html>

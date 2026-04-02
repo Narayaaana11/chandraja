@@ -1,0 +1,128 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Nexus Eval - Results</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f0ede8;--bg2:#e8e4dd;--bg3:#ddd8cf;--paper:#faf9f6;--ink:#1a1612;--ink2:#3d3830;--ink3:#7a7268;--ink4:#b0a898;--line:rgba(26,22,18,.1);--line2:rgba(26,22,18,.06);--red:#d63b2f;--teal:#1a7a6e;--amber:#c97c10;--r:6px;--r2:12px;--r3:20px;--fw-d:'Bebas Neue',sans-serif;--fw-b:'Outfit',sans-serif;--fw-m:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fw-b);background:var(--bg);color:var(--ink);min-height:100vh;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.hdr{position:sticky;top:0;z-index:200;background:var(--ink);color:var(--bg);display:flex;align-items:stretch;height:64px}
+.hdr-logo{display:flex;align-items:center;gap:12px;padding:0 32px;border-right:1px solid rgba(255,255,255,.08);flex-shrink:0}
+.mark{width:36px;height:36px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1}
+.wordmark{font-family:var(--fw-d);font-size:26px;letter-spacing:2px;color:#fff;line-height:1}
+.sub{font-size:9px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-top:3px}
+.hdr-nav{display:flex;align-items:stretch;padding:0 16px;gap:4px;flex:1}
+.hdr-tab{display:flex;align-items:center;gap:8px;padding:0 20px;font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.35);text-decoration:none;border-bottom:3px solid transparent}
+.hdr-tab.on{color:#fff;border-bottom-color:var(--red)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;padding:0 24px;gap:10px;border-left:1px solid rgba(255,255,255,.08)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#2ecc71;box-shadow:0 0 8px #2ecc71}
+.status-txt{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.5px}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:28px auto;padding:0 18px;display:flex;flex-direction:column;gap:18px}
+.hero{background:var(--ink);color:var(--bg);border-radius:var(--r3);padding:28px 28px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+.hero h1{font-family:var(--fw-d);font-size:48px;letter-spacing:2px;line-height:1}
+.hero p{font-size:12px;color:rgba(255,255,255,.45);font-family:var(--fw-m)}
+.score-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;border:1px solid var(--line);border-radius:var(--r2);overflow:hidden}
+.cell{background:var(--paper);padding:18px;text-align:center}
+.cv{font-family:var(--fw-d);font-size:38px;line-height:1}
+.cl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-top:6px}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r2);padding:24px}
+.pt{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.pt::after{content:'';flex:1;height:1px;background:var(--line)}
+.charts{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.chart{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+.chart h3{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--ink3);margin-bottom:10px}
+.chart img{width:100%;height:auto;border-radius:8px}
+.qitem{padding:12px 0;border-bottom:1px solid var(--line)}
+.qitem:last-child{border-bottom:none}
+.qtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.qname{font-size:13px;font-weight:600;color:var(--ink2)}
+.qbadge{font-family:var(--fw-m);font-size:11px;border:1px solid var(--line);background:var(--bg);padding:4px 8px;border-radius:4px}
+.bar{height:8px;background:var(--bg3);border-radius:8px;overflow:hidden;margin-top:8px}
+.fill{height:8px;background:var(--red);border-radius:8px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:12px 18px;border-radius:8px;text-decoration:none;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.btn-primary{background:var(--ink);color:var(--bg)}
+.btn-secondary{border:1px solid var(--line);background:var(--paper);color:var(--ink2)}
+@media(max-width:900px){.score-strip{grid-template-columns:repeat(2,1fr)}.charts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-logo"><div class="mark">N</div><div><div class="wordmark">NEXUS EVAL</div><div class="sub">Smart Evaluation System</div></div></div>
+  <nav class="hdr-nav"><a class="hdr-tab" href="/">Evaluate Answer</a><a class="hdr-tab on" href="#">Results</a><a class="hdr-tab" href="/feedback">Feedback</a></nav>
+  <div class="hdr-right"><div class="status-dot"></div><span class="status-txt">SYSTEM READY</span></div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div><h1>RESULTS</h1><p>Submission performance snapshot</p></div>
+    <p id="submissionIdLabel">submission: -</p>
+  </div>
+
+  <div class="score-strip">
+    <div class="cell"><div class="cv" id="totalScore">-</div><div class="cl">Total Score</div></div>
+    <div class="cell"><div class="cv" id="outOf">-</div><div class="cl">Out Of</div></div>
+    <div class="cell"><div class="cv" id="percentage">-%</div><div class="cl">Percentage</div></div>
+    <div class="cell"><div class="cv" id="grade">-</div><div class="cl">Grade</div></div>
+  </div>
+
+  <div class="panel">
+    <div class="pt">Charts</div>
+    <div class="charts">
+      <div class="chart"><h3>Marks per Question</h3><img id="barChart" src="" alt="bar chart"/></div>
+      <div class="chart"><h3>Score Distribution</h3><img id="pieChart" src="" alt="pie chart"/></div>
+      <div class="chart"><h3>Performance Trend</h3><img id="lineChart" src="" alt="line chart"/></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="pt">Question-wise Performance</div>
+    <div id="questionsList"></div>
+  </div>
+
+  <div class="actions">
+    <a class="btn btn-primary" id="feedbackLink" href="/feedback">Detailed Feedback</a>
+    <a class="btn btn-secondary" href="/">Evaluate Another</a>
+  </div>
+</div>
+
+<script>
+function barColor(v){return v>=70?'#1a7a6e':v>=40?'#c97c10':'#d63b2f'}
+async function loadResults(){
+  const submissionId=new URLSearchParams(window.location.search).get('id');
+  if(!submissionId){return;}
+  document.getElementById('submissionIdLabel').textContent='submission: '+submissionId;
+  document.getElementById('feedbackLink').href='/feedback?id='+encodeURIComponent(submissionId);
+  const res=await fetch('/results/'+encodeURIComponent(submissionId));
+  const data=await res.json();
+  if(data.status==='error'){throw new Error(data.message||'Unable to load results');}
+
+  document.getElementById('totalScore').textContent=data.total ?? '-';
+  document.getElementById('outOf').textContent=data.out_of ?? '-';
+  document.getElementById('percentage').textContent=(data.percentage ?? 0)+'%';
+  document.getElementById('grade').textContent=data.grade ?? '-';
+
+  const charts=data.charts||{};
+  if(charts.bar_chart){document.getElementById('barChart').src=charts.bar_chart;}
+  if(charts.pie_chart){document.getElementById('pieChart').src=charts.pie_chart;}
+  if(charts.line_chart){document.getElementById('lineChart').src=charts.line_chart;}
+
+  const qwrap=document.getElementById('questionsList');
+  qwrap.innerHTML='';
+  const questions=data.questions||{};
+  Object.entries(questions).forEach(([qid,q])=>{
+    const pct=Math.round(Number(q.percentage||0));
+    const item=document.createElement('div');
+    item.className='qitem';
+    item.innerHTML='\n      <div class="qtop">\n        <div class="qname">'+qid+'</div>\n        <div class="qbadge">'+q.marks_awarded+'/'+q.max_marks+' ('+pct+'%)</div>\n      </div>\n      <div class="bar"><div class="fill" style="width:'+pct+'%;background:'+barColor(pct)+'"></div></div>\n    ';
+    qwrap.appendChild(item);
+  });
+}
+loadResults().catch((e)=>{alert('Failed to load results: '+e.message);});
+</script>
+</body>
+</html>

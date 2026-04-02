@@ -1,0 +1,13 @@
+student_text,reference_text,keywords,max_marks,target_marks
+"Photosynthesis converts light to chemical energy in plants using chlorophyll and produces oxygen.","Photosynthesis is the process where plants use sunlight, chlorophyll, water, and carbon dioxide to produce glucose and oxygen.","photosynthesis,chlorophyll,glucose,oxygen",10,9
+"Plants use sunlight and chlorophyll to make food and release oxygen.","Photosynthesis is the process where plants use sunlight, chlorophyll, water, and carbon dioxide to produce glucose and oxygen.","photosynthesis,chlorophyll,glucose,oxygen",10,8
+"Photosynthesis happens in leaves.","Photosynthesis is the process where plants use sunlight, chlorophyll, water, and carbon dioxide to produce glucose and oxygen.","photosynthesis,chlorophyll,glucose,oxygen",10,5
+"The French Revolution started in 1789 and changed France politically.","The French Revolution began in 1789 due to social inequality and economic crisis and led to major political change.","1789,inequality,economic crisis,political change",10,8
+"French Revolution was a fight by people against monarchy.","The French Revolution began in 1789 due to social inequality and economic crisis and led to major political change.","1789,inequality,economic crisis,political change",10,7
+"The revolution happened long ago.","The French Revolution began in 1789 due to social inequality and economic crisis and led to major political change.","1789,inequality,economic crisis,political change",10,4
+"Newton's second law says force equals mass into acceleration.","Newton's second law states that force equals mass multiplied by acceleration, describing motion response.","force,mass,acceleration,motion",10,9
+"Force and acceleration are related in physics.","Newton's second law states that force equals mass multiplied by acceleration, describing motion response.","force,mass,acceleration,motion",10,7
+"Acceleration exists in moving objects.","Newton's second law states that force equals mass multiplied by acceleration, describing motion response.","force,mass,acceleration,motion",10,5
+"Water cycle has evaporation, condensation and precipitation.","The water cycle includes evaporation, condensation, precipitation, and collection driven by solar energy.","evaporation,condensation,precipitation,collection",10,9
+"Water evaporates and then rain falls.","The water cycle includes evaporation, condensation, precipitation, and collection driven by solar energy.","evaporation,condensation,precipitation,collection",10,7
+"Water cycle is about rain.","The water cycle includes evaporation, condensation, precipitation, and collection driven by solar energy.","evaporation,condensation,precipitation,collection",10,4

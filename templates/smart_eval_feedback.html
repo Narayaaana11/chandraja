@@ -1,0 +1,109 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Nexus Eval - Feedback</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#f0ede8;--bg2:#e8e4dd;--bg3:#ddd8cf;--paper:#faf9f6;--ink:#1a1612;--ink2:#3d3830;--ink3:#7a7268;--ink4:#b0a898;--line:rgba(26,22,18,.1);--line2:rgba(26,22,18,.06);--red:#d63b2f;--teal:#1a7a6e;--amber:#c97c10;--r:6px;--r2:12px;--r3:20px;--fw-d:'Bebas Neue',sans-serif;--fw-b:'Outfit',sans-serif;--fw-m:'JetBrains Mono',monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--fw-b);background:var(--bg);color:var(--ink);min-height:100vh;position:relative}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+.hdr{position:sticky;top:0;z-index:200;background:var(--ink);color:var(--bg);display:flex;align-items:stretch;height:64px}
+.hdr-logo{display:flex;align-items:center;gap:12px;padding:0 32px;border-right:1px solid rgba(255,255,255,.08);flex-shrink:0}
+.mark{width:36px;height:36px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1}
+.wordmark{font-family:var(--fw-d);font-size:26px;letter-spacing:2px;color:#fff;line-height:1}
+.sub{font-size:9px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-top:3px}
+.hdr-nav{display:flex;align-items:stretch;padding:0 16px;gap:4px;flex:1}
+.hdr-tab{display:flex;align-items:center;gap:8px;padding:0 20px;font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,.35);text-decoration:none;border-bottom:3px solid transparent}
+.hdr-tab.on{color:#fff;border-bottom-color:var(--red)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;padding:0 24px;gap:10px;border-left:1px solid rgba(255,255,255,.08)}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#2ecc71;box-shadow:0 0 8px #2ecc71}
+.status-txt{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.5px}
+.wrap{position:relative;z-index:1;max-width:1100px;margin:28px auto;padding:0 18px;display:flex;flex-direction:column;gap:18px}
+.hero{background:var(--ink);color:var(--bg);border-radius:var(--r3);padding:28px 28px;display:flex;justify-content:space-between;align-items:flex-end;gap:16px}
+.hero h1{font-family:var(--fw-d);font-size:48px;letter-spacing:2px;line-height:1}
+.hero p{font-size:12px;color:rgba(255,255,255,.45);font-family:var(--fw-m)}
+.summary{background:var(--paper);border:1px solid var(--line);border-radius:var(--r2);padding:18px;font-size:13px;color:var(--ink3)}
+.cards{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r2);padding:18px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.q{font-size:14px;font-weight:700;color:var(--ink2)}
+.badge{font-family:var(--fw-m);font-size:11px;border:1px solid var(--line);background:var(--bg);padding:4px 8px;border-radius:4px}
+.bar{height:10px;background:var(--bg3);border-radius:10px;overflow:hidden;margin:8px 0 12px}
+.fill{height:10px;background:var(--red);border-radius:10px}
+.remark{font-size:13px;color:var(--ink2);margin-bottom:10px}
+.block-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-bottom:8px}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.tag{font-size:11px;font-family:var(--fw-m);padding:5px 10px;border-radius:4px;border:1px solid}
+.tag.miss{background:rgba(214,59,47,.1);color:#d63b2f;border-color:rgba(214,59,47,.2)}
+.tag.ok{background:rgba(26,122,110,.1);color:#1a7a6e;border-color:rgba(26,122,110,.2)}
+.weak{font-size:12px;color:var(--ink3);line-height:1.6}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{padding:12px 18px;border-radius:8px;text-decoration:none;font-size:12px;letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.btn-primary{background:var(--ink);color:var(--bg)}
+.btn-secondary{border:1px solid var(--line);background:var(--paper);color:var(--ink2)}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-logo"><div class="mark">N</div><div><div class="wordmark">NEXUS EVAL</div><div class="sub">Smart Evaluation System</div></div></div>
+  <nav class="hdr-nav"><a class="hdr-tab" href="/">Evaluate Answer</a><a class="hdr-tab" id="resultsLink" href="/results">Results</a><a class="hdr-tab on" href="#">Feedback</a></nav>
+  <div class="hdr-right"><div class="status-dot"></div><span class="status-txt">SYSTEM READY</span></div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <div><h1>FEEDBACK</h1><p>Question-wise analysis and recommendations</p></div>
+    <p id="submissionIdLabel">submission: -</p>
+  </div>
+
+  <div class="summary" id="overallMessage">Loading feedback...</div>
+
+  <div class="cards" id="feedbackContainer"></div>
+
+  <div class="actions">
+    <a class="btn btn-primary" id="resultsBack" href="/results">Back To Results</a>
+    <a class="btn btn-secondary" href="/">Evaluate Another</a>
+  </div>
+</div>
+
+<script>
+function barColor(v){return v>=70?'#1a7a6e':v>=40?'#c97c10':'#d63b2f'}
+async function loadFeedback(){
+  const submissionId=new URLSearchParams(window.location.search).get('id');
+  if(!submissionId){document.getElementById('overallMessage').textContent='Submission id missing in URL.';return;}
+  document.getElementById('submissionIdLabel').textContent='submission: '+submissionId;
+  document.getElementById('resultsBack').href='/results?id='+encodeURIComponent(submissionId);
+  document.getElementById('resultsLink').href='/results?id='+encodeURIComponent(submissionId);
+
+  const res=await fetch('/results/'+encodeURIComponent(submissionId)+'/feedback');
+  const data=await res.json();
+  if(data.status==='error'){throw new Error(data.message||'Unable to load feedback');}
+
+  const pct=Math.round(((Number(data.total)||0)/(Number(data.out_of)||1))*100);
+  if(pct>=80){
+    document.getElementById('overallMessage').textContent='Excellent performance. Score '+pct+'%. Keep refining detail quality and depth.';
+  }else if(pct>=60){
+    document.getElementById('overallMessage').textContent='Good attempt. Score '+pct+'%. Focus on weak areas and missing terms below.';
+  }else{
+    document.getElementById('overallMessage').textContent='Needs improvement. Score '+pct+'%. Revisit core concepts and answer structure.';
+  }
+
+  const container=document.getElementById('feedbackContainer');
+  container.innerHTML='';
+  (data.feedback||[]).forEach((f)=>{
+    const sp=Math.round(Number(f.similarity_percentage||0));
+    const missing=(f.missing_keywords||[]).map((k)=>'<span class="tag miss">'+k+'</span>').join('') || '<span class="tag ok">No missing keywords</span>';
+    const weak=(f.weak_areas||[]).map((w)=>'<div>- '+w+'</div>').join('') || '<div>- No major weak areas identified</div>';
+    const card=document.createElement('div');
+    card.className='card';
+    card.innerHTML='\n      <div class="top">\n        <div class="q">'+(f.question||'Question')+'</div>\n        <div class="badge">'+(f.marks_awarded ?? '-')+'/'+(f.max_marks ?? '-')+'</div>\n      </div>\n      <div class="bar"><div class="fill" style="width:'+sp+'%;background:'+barColor(sp)+'"></div></div>\n      <div class="remark">'+(f.remark||'')+'</div>\n      <div class="block-title">Missing Keywords</div>\n      <div class="tags">'+missing+'</div>\n      <div class="block-title">Areas For Improvement</div>\n      <div class="weak">'+weak+'</div>\n    ';
+    container.appendChild(card);
+  });
+}
+loadFeedback().catch((e)=>{document.getElementById('overallMessage').textContent='Failed to load feedback: '+e.message;});
+</script>
+</body>
+</html>

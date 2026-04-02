@@ -1,0 +1,61 @@
+# Python cache and bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test and tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+
+# Local environment and logs
+.env
+.env.*
+*.log
+
+# IDE/OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Generated training/runtime data
+logs/run_history.json
+logs/metrics_trend.png
+
+# Generated data outputs
+data/extracted/*
+data/processed/*
+data/splits.json
+!data/extracted/.gitkeep
+!data/processed/.gitkeep
+!data/raw/.gitkeep
+
+# Generated evaluation outputs
+results/charts/*
+results/extracted/*
+results/processed/*
+!results/charts/.gitkeep
+!results/extracted/.gitkeep
+!results/processed/.gitkeep
+
+# Uploaded documents
+uploads/answer_sheets/*
+uploads/references/*
+!uploads/answer_sheets/.gitkeep
+!uploads/references/.gitkeep
+
+# Trained models and local artifacts
+models/*.pkl
+models/model_*_meta.json
+model_artifacts/*.joblib
+model_artifacts/*_meta.json
