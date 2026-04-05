@@ -12,7 +12,6 @@ matplotlib
 pymongo
 PyMySQL
 pyyaml
-python-dotenv
 werkzeug
 pytest
 nltk

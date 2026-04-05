@@ -713,9 +713,9 @@ body::before{
         <div class="upload-z" onclick="document.getElementById('image-input').click()">
           <span class="uz-emoji">🖼</span>
           <div class="uz-h">Upload Handwritten Sheet</div>
-          <div class="uz-s">PNG · JPG · JPEG</div>
+          <div class="uz-s">Any file type</div>
         </div>
-        <input type="file" id="image-input" accept="image/*" onchange="previewImg(this)"/>
+        <input type="file" id="image-input" onchange="previewImg(this)"/>
         <img id="preview" class="preview-img" alt=""/>
       </div>
 
@@ -878,9 +878,9 @@ body::before{
       <div class="upload-z" onclick="document.getElementById('multi-input').click()">
         <span class="uz-emoji">📂</span>
         <div class="uz-h">Upload Multiple Answer Sheets</div>
-        <div class="uz-s">Select 2 or more images</div>
+        <div class="uz-s">Select 2 or more files</div>
       </div>
-      <input type="file" id="multi-input" accept="image/*" multiple onchange="countFiles(this)"/>
+      <input type="file" id="multi-input" multiple onchange="countFiles(this)"/>
       <p class="file-count-note" id="file-count"></p>
       <p style="font-size:13px;color:var(--ink3);line-height:1.7;margin-bottom:4px">
         The system extracts text from each sheet using Tesseract OCR, then computes BERT cosine similarity between every pair and flags high-similarity submissions.
@@ -1164,12 +1164,11 @@ async function runPlg(){
               >
                 <div class="upload-icon">🖼️</div>
                 <p>Click to upload handwritten answer sheet</p>
-                <span>PNG, JPG, JPEG supported</span>
+                <span>Any file type supported</span>
               </div>
               <input
                 type="file"
                 id="image-input"
-                accept="image/*"
                 onchange="previewImage(this)"
               />
               <img id="preview" class="preview-img" alt="Preview" />
@@ -1352,12 +1351,11 @@ async function runPlg(){
               >
                 <div class="upload-icon">📂</div>
                 <p>Click to upload multiple answer sheets</p>
-                <span>Select 2 or more images</span>
+                <span>Select 2 or more files</span>
               </div>
               <input
                 type="file"
                 id="multi-input"
-                accept="image/*"
                 multiple
                 onchange="showFileCount(this)"
               />

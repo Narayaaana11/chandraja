@@ -2,6 +2,16 @@
 
 A complete AI-powered solution for automatically evaluating handwritten answer sheets using OCR, semantic similarity analysis, and intelligent feedback generation.
 
+## Public Repository
+
+This project is maintained as the public GitHub repository `chandraja`.
+
+- Setup and run: `SETUP_AND_RUN.md`
+- Contributing guide: `CONTRIBUTING.md`
+- Code of conduct: `CODE_OF_CONDUCT.md`
+- Security policy: `SECURITY.md`
+- License: `LICENSE`
+
 ## Features
 
 - **Automatic OCR Processing**: Extract text from handwritten answer sheets using PaddleOCR with Tesseract fallback

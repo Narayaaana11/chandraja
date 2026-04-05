@@ -20,6 +20,7 @@ htmlcov/
 # Local environment and logs
 .env
 .env.*
+!.env.example
 *.log
 
 # IDE/OS files

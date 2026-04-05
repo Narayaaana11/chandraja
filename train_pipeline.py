@@ -14,7 +14,7 @@ if str(SRC_DIR) not in sys.path:
 from data.load_dataset import compute_dataset_hash
 from smart_eval.config import MANIFEST_FILE, RUN_HISTORY_FILE
 from smart_eval.ml.model_registry import get_last_dataset_hash, update_manifest_hash_and_best
-from smart_eval.ml.run_history import load_run_history, compare_runs
+from smart_eval.ml.run_history import load_run_history
 from smart_eval.ml.train import compare_training_runs, train_and_save_model
 
 

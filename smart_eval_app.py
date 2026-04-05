@@ -1,6 +1,5 @@
 """Smart Evaluation System - Flask application entry point."""
 
-import os
 import logging
 import json
 import uuid
@@ -577,7 +576,6 @@ def evaluate():
         data = request.get_json(silent=True) or {}
         answer_file_id = data.get('answer_file_id')
         reference_file_id = data.get('reference_file_id')
-        subject = data.get('subject', 'general')
         total_marks = data.get('total_marks', CONFIG['grading']['total_marks'])
         
         if not answer_file_id or not reference_file_id:
@@ -628,9 +626,6 @@ def evaluate():
         # Generate charts
         charts_dir = Path(CONFIG['storage']['results_folder']) / 'charts'
         charts_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Prepare data for charts
-        question_scores = {qid: grading_result['questions'][qid] for qid in grading_result['questions']}
         
         charts = chart_generator.generate_all(grading_result, str(charts_dir))
         
@@ -839,7 +834,7 @@ def pipeline_run():
             except Exception as db_err:
                 logger.error(f"Failed to save extraction metadata: {str(db_err)}")
         
-        logger.info(f"Pipeline: OCR complete")
+        logger.info("Pipeline: OCR complete")
         
         # Preprocess both texts
         delimiter = CONFIG['evaluation'].get('question_delimiter', 'Q')
@@ -854,7 +849,7 @@ def pipeline_run():
         text_cleaner.save_processed(answer_file_id, answer_questions, str(processed_output))
         text_cleaner.save_processed(reference_file_id, reference_questions, str(processed_output))
         
-        logger.info(f"Pipeline: Preprocessing complete")
+        logger.info("Pipeline: Preprocessing complete")
         
         # Evaluate
         similarity_scores = similarity_engine.compute_batch(

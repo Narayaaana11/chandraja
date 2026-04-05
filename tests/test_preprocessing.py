@@ -2,7 +2,6 @@
 
 import pytest
 from pathlib import Path
-import json
 import sys
 
 # Add parent directory to path

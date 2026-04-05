@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Dict, List, Any
 
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 logger = logging.getLogger(__name__)
 
@@ -67,8 +66,8 @@ class ChartGenerator:
             # Plot bars
             bars1 = ax.bar([i - width/2 for i in x], marks_awarded, width,
                           label='Marks Awarded', color=colors, alpha=0.8)
-            bars2 = ax.bar([i + width/2 for i in x], max_marks, width,
-                          label='Max Marks', color='lightgray', alpha=0.6)
+            ax.bar([i + width/2 for i in x], max_marks, width,
+                label='Max Marks', color='lightgray', alpha=0.6)
             
             # Customize chart
             ax.set_xlabel('Questions', fontsize=12, fontweight='bold')
@@ -128,8 +127,6 @@ class ChartGenerator:
                 (s["total_score"] / s["out_of"] * 100) if s["out_of"] > 0 else 0
                 for s in submissions
             ]
-            timestamps = [s.get("timestamp", f"Submission {i+1}")
-                         for i, s in enumerate(submissions)]
             
             # Create figure
             fig, ax = plt.subplots(figsize=(10, 6))

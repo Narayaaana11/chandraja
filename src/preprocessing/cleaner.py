@@ -5,11 +5,10 @@ import logging
 import json
 import tempfile
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 try:
     import nltk
-    from nltk.tokenize import sent_tokenize
     from nltk.corpus import stopwords
     
     # Download required NLTK data
@@ -161,7 +160,7 @@ class TextCleaner:
         # Support noisy OCR variants such as "q.no.1", "question 1", "q 1", etc.
         patterns = [
             rf'\b{re.escape(delimiter)}\s*\.?\s*no\.?\s*(\d+)?\b',
-            rf'\bquestion\s*(\d+)\b',
+            r'\bquestion\s*(\d+)\b',
             rf'\b{re.escape(delimiter)}\s*(\d+)\b',
         ]
 

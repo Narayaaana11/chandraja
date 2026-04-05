@@ -1,444 +1,1309 @@
 ﻿<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Nexus Eval - Smart Evaluation System</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
-<style>
-:root{
-  --bg:#f0ede8;
-  --bg2:#e8e4dd;
-  --bg3:#ddd8cf;
-  --paper:#faf9f6;
-  --ink:#1a1612;
-  --ink2:#3d3830;
-  --ink3:#7a7268;
-  --ink4:#b0a898;
-  --line:rgba(26,22,18,.1);
-  --line2:rgba(26,22,18,.06);
-  --red:#d63b2f;
-  --red-soft:rgba(214,59,47,.1);
-  --red-mid:rgba(214,59,47,.2);
-  --teal:#1a7a6e;
-  --teal-soft:rgba(26,122,110,.1);
-  --amber:#c97c10;
-  --r:6px;
-  --r2:12px;
-  --r3:20px;
-  --fw-d:'Bebas Neue', sans-serif;
-  --fw-b:'Outfit', sans-serif;
-  --fw-m:'JetBrains Mono', monospace;
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
-body{font-family:var(--fw-b);background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;position:relative}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--line2) 1px,transparent 1px),linear-gradient(90deg,var(--line2) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-.hdr{position:sticky;top:0;z-index:200;background:var(--ink);color:var(--bg);display:flex;align-items:stretch;height:64px}
-.hdr-logo{display:flex;align-items:center;gap:12px;padding:0 32px;border-right:1px solid rgba(255,255,255,.08);flex-shrink:0}
-.hdr-logo .mark{width:36px;height:36px;border-radius:8px;background:var(--red);display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1}
-.hdr-logo .wordmark{font-family:var(--fw-d);font-size:26px;letter-spacing:2px;color:#fff;line-height:1}
-.hdr-logo .sub{font-size:9px;font-weight:500;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-top:3px}
-.hdr-nav{display:flex;align-items:stretch;padding:0 16px;gap:4px;flex:1}
-.hdr-tab{display:flex;align-items:center;gap:8px;padding:0 20px;font-size:12px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;cursor:pointer;color:rgba(255,255,255,.35);border-bottom:3px solid transparent;transition:all .2s;position:relative}
-.hdr-tab:hover{color:rgba(255,255,255,.7)}
-.hdr-tab.on{color:#fff;border-bottom-color:var(--red)}
-.hdr-tab .tab-dot{width:7px;height:7px;border-radius:50%;background:var(--red);opacity:0;transition:opacity .2s}
-.hdr-tab.on .tab-dot{opacity:1}
-.hdr-right{margin-left:auto;display:flex;align-items:center;padding:0 24px;gap:10px;border-left:1px solid rgba(255,255,255,.08)}
-.status-dot{width:8px;height:8px;border-radius:50%;background:#2ecc71;box-shadow:0 0 8px #2ecc71;animation:pulse-dot 2s ease infinite}
-@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.4}}
-.status-txt{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.5px}
-.page{display:none;position:relative;z-index:1;min-height:calc(100vh - 64px)}
-.page.on{display:flex;flex-direction:column}
-.eval-wrap{display:grid;grid-template-columns:440px 1fr;min-height:calc(100vh - 64px)}
-@media(max-width:900px){.eval-wrap{grid-template-columns:1fr}}
-.lp{background:var(--paper);border-right:1px solid var(--line);padding:32px;display:flex;flex-direction:column;gap:24px;position:sticky;top:64px;height:calc(100vh - 64px);overflow-y:auto}
-.sec-label{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--ink4);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.sec-label::after{content:'';flex:1;height:1px;background:var(--line)}
-.upload-z{border:1.5px dashed var(--line);border-radius:var(--r2);padding:28px 20px;text-align:center;cursor:pointer;transition:all .25s;background:var(--bg);position:relative;overflow:hidden}
-.upload-z::after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%, rgba(214,59,47,.05),transparent 70%);opacity:0;transition:opacity .3s}
-.upload-z:hover{border-color:var(--red);background:var(--bg2)}
-.upload-z:hover::after{opacity:1}
-.upload-z .uz-emoji{font-size:32px;display:block;margin-bottom:10px}
-.upload-z .uz-h{font-size:13px;font-weight:600;color:var(--ink2)}
-.upload-z .uz-s{font-size:11px;color:var(--ink4);margin-top:4px}
-#answer-input,#reference-input,#multi-input{display:none}
-.preview-file{width:100%;border-radius:var(--r2);border:1px solid var(--line);margin-top:12px;display:none;padding:10px;font-size:12px;background:var(--bg2);color:var(--ink3)}
-.field{margin-bottom:18px}
-.field label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink3);display:block;margin-bottom:8px}
-.field input,.field textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:11px 14px;font-size:13px;font-family:var(--fw-b);color:var(--ink);outline:none;transition:border-color .2s,background .2s}
-.field input:focus,.field textarea:focus{border-color:var(--red);background:var(--paper)}
-.run-btn{width:100%;padding:16px;font-family:var(--fw-d);font-size:22px;letter-spacing:3px;border:none;border-radius:var(--r2);background:var(--ink);color:var(--bg);cursor:pointer;position:relative;overflow:hidden;transition:all .25s}
-.run-btn:hover{background:var(--red);transform:translateY(-2px);box-shadow:0 8px 28px rgba(214,59,47,.3)}
-.run-btn:disabled{background:var(--bg3);color:var(--ink4);transform:none;box-shadow:none;cursor:not-allowed}
-.rp{padding:40px;display:flex;flex-direction:column;gap:28px}
-.loading-block{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:400px;gap:20px}
-.loading-block.show{display:flex}
-.loader-track{width:280px;height:3px;background:var(--line);border-radius:3px;overflow:hidden}
-.loader-fill{height:3px;background:var(--red);border-radius:3px;animation:load-anim 1.8s ease-in-out infinite}
-@keyframes load-anim{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:500px;gap:16px;text-align:center}
-.empty-state .es-icon{font-size:64px;opacity:.2;filter:grayscale(1)}
-.empty-state h3{font-family:var(--fw-d);font-size:32px;letter-spacing:2px;color:var(--ink3);opacity:.5}
-.empty-state p{font-size:13px;color:var(--ink4);max-width:280px;line-height:1.6}
-#result-area{display:none;flex-direction:column;gap:20px}
-#result-area.show{display:flex}
-.score-hero{background:var(--ink);color:var(--bg);border-radius:var(--r3);padding:32px;display:flex;align-items:center;gap:32px;position:relative;overflow:hidden}
-.score-hero::after{content:'SCORE';position:absolute;right:24px;bottom:-18px;font-family:var(--fw-d);font-size:100px;color:rgba(255,255,255,.04);letter-spacing:4px;pointer-events:none}
-.sh-circle{width:110px;height:110px;flex-shrink:0;position:relative}
-.sh-circle svg{width:110px;height:110px;transform:rotate(-90deg)}
-.sh-circle .ring-bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
-.sh-circle .ring-fill{fill:none;stroke:var(--red);stroke-width:8;stroke-linecap:round;stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset 1.4s cubic-bezier(.16,1,.3,1)}
-.sh-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.sh-center .num{font-family:var(--fw-d);font-size:32px;letter-spacing:1px;color:#fff;line-height:1}
-.sh-center .denom{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px}
-.sh-info{flex:1}
-.sh-grade{font-family:var(--fw-d);font-size:72px;letter-spacing:4px;color:#fff;line-height:1;margin-bottom:8px}
-.sh-tags{display:flex;gap:8px;flex-wrap:wrap}
-.sh-tag{font-size:11px;font-family:var(--fw-m);padding:4px 12px;border-radius:30px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);letter-spacing:.5px}
-.sh-tag.hi{background:rgba(46,204,113,.15);color:#2ecc71}
-.sh-tag.mi{background:rgba(255,179,64,.15);color:#ffb340}
-.sh-tag.lo{background:rgba(214,59,47,.15);color:var(--red)}
-.metrics-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;border-radius:var(--r2);overflow:hidden;border:1px solid var(--line)}
-.metric-cell{background:var(--paper);padding:20px;text-align:center}
-.metric-cell .mv{font-family:var(--fw-d);font-size:38px;letter-spacing:1px;color:var(--ink);line-height:1}
-.metric-cell .ml{font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);margin-top:6px}
-.bars-card,.kw-panel,.pres-panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r2);padding:24px}
-.bars-card .bc-title,.panel-title{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--ink4);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.bars-card .bc-title::after,.panel-title::after{content:'';flex:1;height:1px;background:var(--line)}
-.bar-row{margin-bottom:18px}
-.bar-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.bar-meta .bm-name{font-size:13px;font-weight:500;color:var(--ink2)}
-.bar-meta .bm-val{font-family:var(--fw-m);font-size:12px;font-weight:600;color:var(--ink);background:var(--bg);padding:3px 10px;border-radius:4px;border:1px solid var(--line)}
-.bar-track{height:8px;background:var(--bg3);border-radius:8px;overflow:hidden}
-.bar-fill{height:8px;border-radius:8px;transition:width 1.3s cubic-bezier(.16,1,.3,1)}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-@media(max-width:1100px){.two-col{grid-template-columns:1fr}}
-.kw-panel .kw-tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.kw-chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-family:var(--fw-m);font-weight:500;padding:6px 14px;border-radius:4px}
-.kw-f{background:var(--teal-soft);color:var(--teal);border:1px solid rgba(26,122,110,.18)}
-.kw-m{background:var(--red-soft);color:var(--red);border:1px solid var(--red-mid)}
-.pres-gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
-.gauge{aspect-ratio:1;background:var(--bg);border:1px solid var(--line);border-radius:var(--r2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:12px}
-.gauge .g-val{font-family:var(--fw-d);font-size:30px;letter-spacing:1px;color:var(--ink)}
-.gauge .g-lbl{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink4);text-align:center}
-.gauge .g-dot{width:8px;height:8px;border-radius:50%;background:var(--bg3)}
-.ocr-panel{background:var(--ink);color:var(--bg);border-radius:var(--r2);padding:24px}
-.ocr-panel .oc-label{font-size:9px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:14px;display:flex;align-items:center;gap:8px}
-.ocr-panel .oc-label .oc-badge{background:var(--red);color:#fff;padding:2px 8px;border-radius:3px;font-size:8px;letter-spacing:1px}
-.ocr-box{font-family:var(--fw-m);font-size:12px;color:rgba(255,255,255,.55);white-space:pre-wrap;line-height:1.8;max-height:160px;overflow-y:auto}
-.engine-line{font-size:10px;font-family:var(--fw-m);color:rgba(255,255,255,.2);margin-top:12px}
-.plg-page{display:grid;grid-template-columns:400px 1fr;min-height:calc(100vh - 64px)}
-@media(max-width:900px){.plg-page{grid-template-columns:1fr}}
-.plg-lp{background:var(--paper);border-right:1px solid var(--line);padding:32px;display:flex;flex-direction:column;gap:24px}
-.plg-rp{padding:40px;display:flex;flex-direction:column;gap:20px}
-#plg-result{display:none}
-#plg-result.show{display:flex;flex-direction:column;gap:14px}
-.about-page{position:relative;z-index:1;padding:56px 60px}
-@media(max-width:800px){.about-page{padding:32px 24px}}
-.about-hero{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:56px;align-items:end}
-@media(max-width:800px){.about-hero{grid-template-columns:1fr}}
-.about-hero h2{font-family:var(--fw-d);font-size:72px;letter-spacing:3px;line-height:1;color:var(--ink)}
-.about-hero h2 em{color:var(--red);font-style:normal}
-.about-hero p{font-size:15px;color:var(--ink3);line-height:1.75;max-width:440px}
-</style>
-</head>
-<body>
-<header class="hdr">
-  <div class="hdr-logo">
-    <div class="mark">N</div>
-    <div>
-      <div class="wordmark">NEXUS EVAL</div>
-      <div class="sub">Smart Evaluation System</div>
-    </div>
-  </div>
-  <nav class="hdr-nav">
-    <div class="hdr-tab on" onclick="gotoPage('eval',this)"><span class="tab-dot"></span>Evaluate Answer</div>
-    <div class="hdr-tab" onclick="gotoPage('plg',this)"><span class="tab-dot"></span>Plagiarism Check</div>
-    <div class="hdr-tab" onclick="gotoPage('about',this)"><span class="tab-dot"></span>About</div>
-  </nav>
-  <div class="hdr-right">
-    <div class="status-dot"></div>
-    <span class="status-txt">SYSTEM READY</span>
-  </div>
-</header>
-
-<div class="page on" id="page-eval">
-  <div class="eval-wrap">
-    <aside class="lp">
-      <div>
-        <div class="sec-label">Answer Sheet</div>
-        <div class="upload-z" onclick="document.getElementById('answer-input').click()">
-          <span class="uz-emoji">PDF</span>
-          <div class="uz-h">Upload Student Answer Sheet</div>
-          <div class="uz-s">PDF format</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Nexus Eval - Smart Evaluation System</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f0ede8;
+        --bg2: #e8e4dd;
+        --bg3: #ddd8cf;
+        --paper: #faf9f6;
+        --ink: #1a1612;
+        --ink2: #3d3830;
+        --ink3: #7a7268;
+        --ink4: #b0a898;
+        --line: rgba(26, 22, 18, 0.1);
+        --line2: rgba(26, 22, 18, 0.06);
+        --red: #d63b2f;
+        --red-soft: rgba(214, 59, 47, 0.1);
+        --red-mid: rgba(214, 59, 47, 0.2);
+        --teal: #1a7a6e;
+        --teal-soft: rgba(26, 122, 110, 0.1);
+        --amber: #c97c10;
+        --r: 6px;
+        --r2: 12px;
+        --r3: 20px;
+        --fw-d: "Bebas Neue", sans-serif;
+        --fw-b: "Outfit", sans-serif;
+        --fw-m: "JetBrains Mono", monospace;
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        font-family: var(--fw-b);
+        background: var(--bg);
+        color: var(--ink);
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(var(--line2) 1px, transparent 1px),
+          linear-gradient(90deg, var(--line2) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+      .hdr {
+        position: sticky;
+        top: 0;
+        z-index: 200;
+        background: var(--ink);
+        color: var(--bg);
+        display: flex;
+        align-items: stretch;
+        height: 64px;
+      }
+      .hdr-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0 32px;
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+        flex-shrink: 0;
+      }
+      .hdr-logo .mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: var(--red);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        line-height: 1;
+      }
+      .hdr-logo .wordmark {
+        font-family: var(--fw-d);
+        font-size: 26px;
+        letter-spacing: 2px;
+        color: #fff;
+        line-height: 1;
+      }
+      .hdr-logo .sub {
+        font-size: 9px;
+        font-weight: 500;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.35);
+        margin-top: 3px;
+      }
+      .hdr-nav {
+        display: flex;
+        align-items: stretch;
+        padding: 0 16px;
+        gap: 4px;
+        flex: 1;
+      }
+      .hdr-tab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 20px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.35);
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+        position: relative;
+      }
+      .hdr-tab:hover {
+        color: rgba(255, 255, 255, 0.7);
+      }
+      .hdr-tab.on {
+        color: #fff;
+        border-bottom-color: var(--red);
+      }
+      .hdr-tab .tab-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--red);
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .hdr-tab.on .tab-dot {
+        opacity: 1;
+      }
+      .hdr-right {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        padding: 0 24px;
+        gap: 10px;
+        border-left: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #2ecc71;
+        box-shadow: 0 0 8px #2ecc71;
+        animation: pulse-dot 2s ease infinite;
+      }
+      @keyframes pulse-dot {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+      .status-txt {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.4);
+        letter-spacing: 0.5px;
+      }
+      .page {
+        display: none;
+        position: relative;
+        z-index: 1;
+        min-height: calc(100vh - 64px);
+      }
+      .page.on {
+        display: flex;
+        flex-direction: column;
+      }
+      .eval-wrap {
+        display: grid;
+        grid-template-columns: 440px 1fr;
+        min-height: calc(100vh - 64px);
+      }
+      @media (max-width: 900px) {
+        .eval-wrap {
+          grid-template-columns: 1fr;
+        }
+      }
+      .lp {
+        background: var(--paper);
+        border-right: 1px solid var(--line);
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        position: sticky;
+        top: 64px;
+        height: calc(100vh - 64px);
+        overflow-y: auto;
+      }
+      .sec-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--ink4);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .sec-label::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--line);
+      }
+      .upload-z {
+        border: 1.5px dashed var(--line);
+        border-radius: var(--r2);
+        padding: 28px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.25s;
+        background: var(--bg);
+        position: relative;
+        overflow: hidden;
+      }
+      .upload-z::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at 50% 50%,
+          rgba(214, 59, 47, 0.05),
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .upload-z:hover {
+        border-color: var(--red);
+        background: var(--bg2);
+      }
+      .upload-z:hover::after {
+        opacity: 1;
+      }
+      .upload-z .uz-emoji {
+        font-size: 32px;
+        display: block;
+        margin-bottom: 10px;
+      }
+      .upload-z .uz-h {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--ink2);
+      }
+      .upload-z .uz-s {
+        font-size: 11px;
+        color: var(--ink4);
+        margin-top: 4px;
+      }
+      #answer-input,
+      #reference-input,
+      #multi-input {
+        display: none;
+      }
+      .preview-file {
+        width: 100%;
+        border-radius: var(--r2);
+        border: 1px solid var(--line);
+        margin-top: 12px;
+        display: none;
+        padding: 10px;
+        font-size: 12px;
+        background: var(--bg2);
+        color: var(--ink3);
+      }
+      .field {
+        margin-bottom: 18px;
+      }
+      .field label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--ink3);
+        display: block;
+        margin-bottom: 8px;
+      }
+      .field input,
+      .field textarea {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
+        padding: 11px 14px;
+        font-size: 13px;
+        font-family: var(--fw-b);
+        color: var(--ink);
+        outline: none;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+      }
+      .field input:focus,
+      .field textarea:focus {
+        border-color: var(--red);
+        background: var(--paper);
+      }
+      .run-btn {
+        width: 100%;
+        padding: 16px;
+        font-family: var(--fw-d);
+        font-size: 22px;
+        letter-spacing: 3px;
+        border: none;
+        border-radius: var(--r2);
+        background: var(--ink);
+        color: var(--bg);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.25s;
+      }
+      .run-btn:hover {
+        background: var(--red);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 28px rgba(214, 59, 47, 0.3);
+      }
+      .run-btn:disabled {
+        background: var(--bg3);
+        color: var(--ink4);
+        transform: none;
+        box-shadow: none;
+        cursor: not-allowed;
+      }
+      .rp {
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+      .loading-block {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 400px;
+        gap: 20px;
+      }
+      .loading-block.show {
+        display: flex;
+      }
+      .loader-track {
+        width: 280px;
+        height: 3px;
+        background: var(--line);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .loader-fill {
+        height: 3px;
+        background: var(--red);
+        border-radius: 3px;
+        animation: load-anim 1.8s ease-in-out infinite;
+      }
+      @keyframes load-anim {
+        0% {
+          width: 0%;
+          margin-left: 0;
+        }
+        50% {
+          width: 60%;
+          margin-left: 20%;
+        }
+        100% {
+          width: 0%;
+          margin-left: 100%;
+        }
+      }
+      .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 500px;
+        gap: 16px;
+        text-align: center;
+      }
+      .empty-state .es-icon {
+        font-size: 64px;
+        opacity: 0.2;
+        filter: grayscale(1);
+      }
+      .empty-state h3 {
+        font-family: var(--fw-d);
+        font-size: 32px;
+        letter-spacing: 2px;
+        color: var(--ink3);
+        opacity: 0.5;
+      }
+      .empty-state p {
+        font-size: 13px;
+        color: var(--ink4);
+        max-width: 280px;
+        line-height: 1.6;
+      }
+      #result-area {
+        display: none;
+        flex-direction: column;
+        gap: 20px;
+      }
+      #result-area.show {
+        display: flex;
+      }
+      .score-hero {
+        background: var(--ink);
+        color: var(--bg);
+        border-radius: var(--r3);
+        padding: 32px;
+        display: flex;
+        align-items: center;
+        gap: 32px;
+        position: relative;
+        overflow: hidden;
+      }
+      .score-hero::after {
+        content: "SCORE";
+        position: absolute;
+        right: 24px;
+        bottom: -18px;
+        font-family: var(--fw-d);
+        font-size: 100px;
+        color: rgba(255, 255, 255, 0.04);
+        letter-spacing: 4px;
+        pointer-events: none;
+      }
+      .sh-circle {
+        width: 110px;
+        height: 110px;
+        flex-shrink: 0;
+        position: relative;
+      }
+      .sh-circle svg {
+        width: 110px;
+        height: 110px;
+        transform: rotate(-90deg);
+      }
+      .sh-circle .ring-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.08);
+        stroke-width: 8;
+      }
+      .sh-circle .ring-fill {
+        fill: none;
+        stroke: var(--red);
+        stroke-width: 8;
+        stroke-linecap: round;
+        stroke-dasharray: 283;
+        stroke-dashoffset: 283;
+        transition: stroke-dashoffset 1.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .sh-center {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+      .sh-center .num {
+        font-family: var(--fw-d);
+        font-size: 32px;
+        letter-spacing: 1px;
+        color: #fff;
+        line-height: 1;
+      }
+      .sh-center .denom {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.4);
+        margin-top: 2px;
+      }
+      .sh-info {
+        flex: 1;
+      }
+      .sh-grade {
+        font-family: var(--fw-d);
+        font-size: 72px;
+        letter-spacing: 4px;
+        color: #fff;
+        line-height: 1;
+        margin-bottom: 8px;
+      }
+      .sh-tags {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .sh-tag {
+        font-size: 11px;
+        font-family: var(--fw-m);
+        padding: 4px 12px;
+        border-radius: 30px;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.5);
+        letter-spacing: 0.5px;
+      }
+      .sh-tag.hi {
+        background: rgba(46, 204, 113, 0.15);
+        color: #2ecc71;
+      }
+      .sh-tag.mi {
+        background: rgba(255, 179, 64, 0.15);
+        color: #ffb340;
+      }
+      .sh-tag.lo {
+        background: rgba(214, 59, 47, 0.15);
+        color: var(--red);
+      }
+      .metrics-strip {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 2px;
+        border-radius: var(--r2);
+        overflow: hidden;
+        border: 1px solid var(--line);
+      }
+      .metric-cell {
+        background: var(--paper);
+        padding: 20px;
+        text-align: center;
+      }
+      .metric-cell .mv {
+        font-family: var(--fw-d);
+        font-size: 38px;
+        letter-spacing: 1px;
+        color: var(--ink);
+        line-height: 1;
+      }
+      .metric-cell .ml {
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--ink4);
+        margin-top: 6px;
+      }
+      .bars-card,
+      .kw-panel,
+      .pres-panel {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: var(--r2);
+        padding: 24px;
+      }
+      .bars-card .bc-title,
+      .panel-title {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--ink4);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .bars-card .bc-title::after,
+      .panel-title::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: var(--line);
+      }
+      .bar-row {
+        margin-bottom: 18px;
+      }
+      .bar-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .bar-meta .bm-name {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--ink2);
+      }
+      .bar-meta .bm-val {
+        font-family: var(--fw-m);
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--ink);
+        background: var(--bg);
+        padding: 3px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--line);
+      }
+      .bar-track {
+        height: 8px;
+        background: var(--bg3);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 8px;
+        border-radius: 8px;
+        transition: width 1.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+      @media (max-width: 1100px) {
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+      }
+      .kw-panel .kw-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 4px;
+      }
+      .kw-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-family: var(--fw-m);
+        font-weight: 500;
+        padding: 6px 14px;
+        border-radius: 4px;
+      }
+      .kw-f {
+        background: var(--teal-soft);
+        color: var(--teal);
+        border: 1px solid rgba(26, 122, 110, 0.18);
+      }
+      .kw-m {
+        background: var(--red-soft);
+        color: var(--red);
+        border: 1px solid var(--red-mid);
+      }
+      .pres-gauges {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .gauge {
+        aspect-ratio: 1;
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: var(--r2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 12px;
+      }
+      .gauge .g-val {
+        font-family: var(--fw-d);
+        font-size: 30px;
+        letter-spacing: 1px;
+        color: var(--ink);
+      }
+      .gauge .g-lbl {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        color: var(--ink4);
+        text-align: center;
+      }
+      .gauge .g-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--bg3);
+      }
+      .ocr-panel {
+        background: var(--ink);
+        color: var(--bg);
+        border-radius: var(--r2);
+        padding: 24px;
+      }
+      .ocr-panel .oc-label {
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.3);
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .ocr-panel .oc-label .oc-badge {
+        background: var(--red);
+        color: #fff;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 8px;
+        letter-spacing: 1px;
+      }
+      .ocr-box {
+        font-family: var(--fw-m);
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.55);
+        white-space: pre-wrap;
+        line-height: 1.8;
+        max-height: 160px;
+        overflow-y: auto;
+      }
+      .engine-line {
+        font-size: 10px;
+        font-family: var(--fw-m);
+        color: rgba(255, 255, 255, 0.2);
+        margin-top: 12px;
+      }
+      .plg-page {
+        display: grid;
+        grid-template-columns: 400px 1fr;
+        min-height: calc(100vh - 64px);
+      }
+      @media (max-width: 900px) {
+        .plg-page {
+          grid-template-columns: 1fr;
+        }
+      }
+      .plg-lp {
+        background: var(--paper);
+        border-right: 1px solid var(--line);
+        padding: 32px;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+      .plg-rp {
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+      #plg-result {
+        display: none;
+      }
+      #plg-result.show {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .about-page {
+        position: relative;
+        z-index: 1;
+        padding: 56px 60px;
+      }
+      @media (max-width: 800px) {
+        .about-page {
+          padding: 32px 24px;
+        }
+      }
+      .about-hero {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-bottom: 56px;
+        align-items: end;
+      }
+      @media (max-width: 800px) {
+        .about-hero {
+          grid-template-columns: 1fr;
+        }
+      }
+      .about-hero h2 {
+        font-family: var(--fw-d);
+        font-size: 72px;
+        letter-spacing: 3px;
+        line-height: 1;
+        color: var(--ink);
+      }
+      .about-hero h2 em {
+        color: var(--red);
+        font-style: normal;
+      }
+      .about-hero p {
+        font-size: 15px;
+        color: var(--ink3);
+        line-height: 1.75;
+        max-width: 440px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hdr">
+      <div class="hdr-logo">
+        <div class="mark">N</div>
+        <div>
+          <div class="wordmark">NEXUS EVAL</div>
+          <div class="sub">Smart Evaluation System</div>
         </div>
-        <input type="file" id="answer-input" accept=".pdf" onchange="previewFile(this,'answer-preview')"/>
-        <div id="answer-preview" class="preview-file"></div>
       </div>
-
-      <div>
-        <div class="sec-label">Reference Sheet</div>
-        <div class="upload-z" onclick="document.getElementById('reference-input').click()">
-          <span class="uz-emoji">REF</span>
-          <div class="uz-h">Upload Reference Answer</div>
-          <div class="uz-s">PDF format</div>
+      <nav class="hdr-nav">
+        <div class="hdr-tab on" onclick="gotoPage('eval', this)">
+          <span class="tab-dot"></span>Evaluate Answer
         </div>
-        <input type="file" id="reference-input" accept=".pdf" onchange="previewFile(this,'reference-preview')"/>
-        <div id="reference-preview" class="preview-file"></div>
-      </div>
-
-      <div>
-        <div class="sec-label">Configuration</div>
-        <div class="field">
-          <label>Total Marks</label>
-          <input type="number" id="max-marks" value="100" min="1" max="1000"/>
+        <div class="hdr-tab" onclick="gotoPage('plg', this)">
+          <span class="tab-dot"></span>Plagiarism Check
         </div>
-        <div class="field">
-          <label>Subject</label>
-          <input type="text" id="subject" placeholder="Machine Learning"/>
+        <div class="hdr-tab" onclick="gotoPage('about', this)">
+          <span class="tab-dot"></span>About
         </div>
+      </nav>
+      <div class="hdr-right">
+        <div class="status-dot"></div>
+        <span class="status-txt">SYSTEM READY</span>
       </div>
+    </header>
 
-      <button class="run-btn" id="eval-btn" onclick="runEval()">RUN EVALUATION</button>
-    </aside>
+    <div class="page on" id="page-eval">
+      <div class="eval-wrap">
+        <aside class="lp">
+          <div>
+            <div class="sec-label">Answer Sheet</div>
+            <div
+              class="upload-z"
+              onclick="document.getElementById('answer-input').click()"
+            >
+              <span class="uz-emoji">PDF</span>
+              <div class="uz-h">Upload Student Answer Sheet</div>
+              <div class="uz-s">Any file type</div>
+            </div>
+            <input
+              type="file"
+              id="answer-input"
+              onchange="previewFile(this, 'answer-preview')"
+            />
+            <div id="answer-preview" class="preview-file"></div>
+          </div>
 
-    <main class="rp">
-      <div class="empty-state" id="eval-empty">
-        <div class="es-icon">REPORT</div>
-        <h3>NO RESULT YET</h3>
-        <p>Upload answer and reference sheets, then run evaluation to view complete analysis.</p>
-      </div>
+          <div>
+            <div class="sec-label">Reference Sheet</div>
+            <div
+              class="upload-z"
+              onclick="document.getElementById('reference-input').click()"
+            >
+              <span class="uz-emoji">REF</span>
+              <div class="uz-h">Upload Reference Answer</div>
+              <div class="uz-s">Any file type</div>
+            </div>
+            <input
+              type="file"
+              id="reference-input"
+              onchange="previewFile(this, 'reference-preview')"
+            />
+            <div id="reference-preview" class="preview-file"></div>
+          </div>
 
-      <div class="loading-block" id="eval-loading">
-        <div class="loader-track"><div class="loader-fill"></div></div>
-        <div class="load-steps">
-          <div>Uploading files</div>
-          <div>Extracting OCR text</div>
-          <div>Running semantic similarity</div>
-          <div>Generating score and grade</div>
-          <div>Building feedback report</div>
-        </div>
-      </div>
-
-      <div id="result-area">
-        <div class="score-hero">
-          <div class="sh-circle">
-            <svg viewBox="0 0 110 110">
-              <circle class="ring-bg" cx="55" cy="55" r="45"/>
-              <circle class="ring-fill" id="ring-fill" cx="55" cy="55" r="45"/>
-            </svg>
-            <div class="sh-center">
-              <div class="num" id="r-total">-</div>
-              <div class="denom" id="r-denom">/ 100</div>
+          <div>
+            <div class="sec-label">Configuration</div>
+            <div class="field">
+              <label>Total Marks</label>
+              <input
+                type="number"
+                id="max-marks"
+                value="100"
+                min="1"
+                max="1000"
+              />
+            </div>
+            <div class="field">
+              <label>Subject</label>
+              <input type="text" id="subject" placeholder="Machine Learning" />
             </div>
           </div>
-          <div class="sh-info">
-            <div class="sh-grade" id="r-grade">-</div>
-            <div class="sh-tags">
-              <span class="sh-tag" id="tag-sem">SIM -</span>
-              <span class="sh-tag" id="tag-kw">QUESTIONS -</span>
-              <span class="sh-tag" id="tag-pres">SUBMISSION -</span>
+
+          <button class="run-btn" id="eval-btn" onclick="runEval()">
+            RUN EVALUATION
+          </button>
+        </aside>
+
+        <main class="rp">
+          <div class="empty-state" id="eval-empty">
+            <div class="es-icon">REPORT</div>
+            <h3>NO RESULT YET</h3>
+            <p>
+              Upload answer and reference sheets, then run evaluation to view
+              complete analysis.
+            </p>
+          </div>
+
+          <div class="loading-block" id="eval-loading">
+            <div class="loader-track"><div class="loader-fill"></div></div>
+            <div class="load-steps">
+              <div>Uploading files</div>
+              <div>Extracting OCR text</div>
+              <div>Running semantic similarity</div>
+              <div>Generating score and grade</div>
+              <div>Building feedback report</div>
             </div>
           </div>
-        </div>
 
-        <div class="metrics-strip">
-          <div class="metric-cell"><div class="mv" id="mc-content">-</div><div class="ml">Total Marks</div></div>
-          <div class="metric-cell"><div class="mv" id="mc-pres">-</div><div class="ml">Percentage</div></div>
-          <div class="metric-cell"><div class="mv" id="mc-engine">AI</div><div class="ml">Engine</div></div>
-        </div>
+          <div id="result-area">
+            <div class="score-hero">
+              <div class="sh-circle">
+                <svg viewBox="0 0 110 110">
+                  <circle class="ring-bg" cx="55" cy="55" r="45" />
+                  <circle
+                    class="ring-fill"
+                    id="ring-fill"
+                    cx="55"
+                    cy="55"
+                    r="45"
+                  />
+                </svg>
+                <div class="sh-center">
+                  <div class="num" id="r-total">-</div>
+                  <div class="denom" id="r-denom">/ 100</div>
+                </div>
+              </div>
+              <div class="sh-info">
+                <div class="sh-grade" id="r-grade">-</div>
+                <div class="sh-tags">
+                  <span class="sh-tag" id="tag-sem">SIM -</span>
+                  <span class="sh-tag" id="tag-kw">QUESTIONS -</span>
+                  <span class="sh-tag" id="tag-pres">SUBMISSION -</span>
+                </div>
+              </div>
+            </div>
 
-        <div class="bars-card">
-          <div class="bc-title">Score Breakdown</div>
-          <div class="bar-row">
-            <div class="bar-meta"><span class="bm-name">Overall Similarity Proxy</span><span class="bm-val" id="bv-sem">-</span></div>
-            <div class="bar-track"><div class="bar-fill" id="bf-sem" style="width:0%"></div></div>
-          </div>
-          <div class="bar-row">
-            <div class="bar-meta"><span class="bm-name">Answered Questions Ratio</span><span class="bm-val" id="bv-kw">-</span></div>
-            <div class="bar-track"><div class="bar-fill" id="bf-kw" style="width:0%"></div></div>
-          </div>
-          <div class="bar-row">
-            <div class="bar-meta"><span class="bm-name">Letter Grade Strength</span><span class="bm-val" id="bv-len">-</span></div>
-            <div class="bar-track"><div class="bar-fill" id="bf-len" style="width:0%"></div></div>
-          </div>
-        </div>
+            <div class="metrics-strip">
+              <div class="metric-cell">
+                <div class="mv" id="mc-content">-</div>
+                <div class="ml">Total Marks</div>
+              </div>
+              <div class="metric-cell">
+                <div class="mv" id="mc-pres">-</div>
+                <div class="ml">Percentage</div>
+              </div>
+              <div class="metric-cell">
+                <div class="mv" id="mc-engine">AI</div>
+                <div class="ml">Engine</div>
+              </div>
+            </div>
 
-        <div class="two-col">
-          <div class="kw-panel">
-            <div class="panel-title">Question Feedback</div>
-            <div class="kw-tags" id="kw-tags"></div>
-          </div>
-          <div class="pres-panel">
-            <div class="panel-title">Summary Metrics</div>
-            <div class="pres-gauges">
-              <div class="gauge"><div class="g-val" id="g-clarity">-</div><div class="g-dot"></div><div class="g-lbl">Questions</div></div>
-              <div class="gauge"><div class="g-val" id="g-ink">-</div><div class="g-dot"></div><div class="g-lbl">Grade</div></div>
-              <div class="gauge"><div class="g-val" id="g-align">-</div><div class="g-dot"></div><div class="g-lbl">Submission</div></div>
+            <div class="bars-card">
+              <div class="bc-title">Score Breakdown</div>
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span class="bm-name">Overall Similarity Proxy</span
+                  ><span class="bm-val" id="bv-sem">-</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" id="bf-sem" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span class="bm-name">Answered Questions Ratio</span
+                  ><span class="bm-val" id="bv-kw">-</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" id="bf-kw" style="width: 0%"></div>
+                </div>
+              </div>
+              <div class="bar-row">
+                <div class="bar-meta">
+                  <span class="bm-name">Letter Grade Strength</span
+                  ><span class="bm-val" id="bv-len">-</span>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" id="bf-len" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="two-col">
+              <div class="kw-panel">
+                <div class="panel-title">Question Feedback</div>
+                <div class="kw-tags" id="kw-tags"></div>
+              </div>
+              <div class="pres-panel">
+                <div class="panel-title">Summary Metrics</div>
+                <div class="pres-gauges">
+                  <div class="gauge">
+                    <div class="g-val" id="g-clarity">-</div>
+                    <div class="g-dot"></div>
+                    <div class="g-lbl">Questions</div>
+                  </div>
+                  <div class="gauge">
+                    <div class="g-val" id="g-ink">-</div>
+                    <div class="g-dot"></div>
+                    <div class="g-lbl">Grade</div>
+                  </div>
+                  <div class="gauge">
+                    <div class="g-val" id="g-align">-</div>
+                    <div class="g-dot"></div>
+                    <div class="g-lbl">Submission</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ocr-panel">
+              <div class="oc-label">
+                <span class="oc-badge">PIPELINE</span>Evaluation Status
+              </div>
+              <div class="ocr-box" id="ocr-text">Evaluation complete.</div>
+              <div class="engine-line">
+                ENGINE: <span id="eng-name">SENTENCE-TRANSFORMERS</span>
+              </div>
             </div>
           </div>
-        </div>
-
-        <div class="ocr-panel">
-          <div class="oc-label"><span class="oc-badge">PIPELINE</span>Evaluation Status</div>
-          <div class="ocr-box" id="ocr-text">Evaluation complete.</div>
-          <div class="engine-line">ENGINE: <span id="eng-name">SENTENCE-TRANSFORMERS</span></div>
-        </div>
-      </div>
-    </main>
-  </div>
-</div>
-
-<div class="page" id="page-plg">
-  <div class="plg-page">
-    <aside class="plg-lp">
-      <div class="sec-label">Upload Sheets</div>
-      <div class="upload-z" onclick="document.getElementById('multi-input').click()">
-        <span class="uz-emoji">MULTI</span>
-        <div class="uz-h">Upload Multiple Answer Sheets</div>
-        <div class="uz-s">Feature placeholder in current backend</div>
-      </div>
-      <input type="file" id="multi-input" accept=".pdf" multiple onchange="countFiles(this)"/>
-      <p id="file-count" style="font-size:12px;font-family:var(--fw-m);color:var(--red);margin-bottom:12px"></p>
-      <button class="run-btn" id="plg-btn" onclick="runPlg()">RUN PLAGIARISM CHECK</button>
-    </aside>
-    <main class="plg-rp">
-      <div class="empty-state" id="plg-empty">
-        <div class="es-icon">SCAN</div>
-        <h3>BACKEND ROUTE NEEDED</h3>
-        <p>This UI is aligned to your design. Plagiarism endpoint is not yet implemented in backend.</p>
-      </div>
-    </main>
-  </div>
-</div>
-
-<div class="page" id="page-about">
-  <div class="about-page">
-    <div class="about-hero">
-      <div><h2>HOW<br/>NEXUS<br/><em>EVAL</em><br/>WORKS</h2></div>
-      <div><p>Nexus Eval combines OCR extraction, semantic similarity scoring, grading logic, and feedback generation for automated assessment.</p></div>
-    </div>
-    <div class="tech-section">
-      <h3 style="font-family:var(--fw-d);font-size:28px;letter-spacing:2px;color:var(--ink);margin-bottom:18px">TECH STACK</h3>
-      <div style="display:flex;flex-wrap:wrap;gap:10px">
-        <span style="font-family:var(--fw-m);font-size:12px;padding:8px 18px;border-radius:4px;background:var(--paper);border:1px solid var(--line);color:var(--ink2)">Flask</span>
-        <span style="font-family:var(--fw-m);font-size:12px;padding:8px 18px;border-radius:4px;background:var(--paper);border:1px solid var(--line);color:var(--ink2)">PaddleOCR / Tesseract</span>
-        <span style="font-family:var(--fw-m);font-size:12px;padding:8px 18px;border-radius:4px;background:var(--paper);border:1px solid var(--line);color:var(--ink2)">Sentence Transformers</span>
-        <span style="font-family:var(--fw-m);font-size:12px;padding:8px 18px;border-radius:4px;background:var(--paper);border:1px solid var(--line);color:var(--ink2)">Matplotlib</span>
+        </main>
       </div>
     </div>
-  </div>
-</div>
 
-<script>
-function gotoPage(name,el){
-  document.querySelectorAll('.hdr-tab').forEach(t=>t.classList.remove('on'));
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
-  el.classList.add('on');
-  document.getElementById('page-'+name).classList.add('on');
-}
-function previewFile(inp,targetId){
-  const f=inp.files[0];
-  const box=document.getElementById(targetId);
-  if(!f){box.style.display='none';return;}
-  box.textContent='Selected: '+f.name;
-  box.style.display='block';
-}
-function countFiles(inp){
-  document.getElementById('file-count').textContent=inp.files.length+' file(s) selected';
-}
-function barColor(v){return v>=.75?'#1a7a6e':v>=.5?'#c97c10':'#d63b2f'}
-function setBar(bfId,bvId,v){
-  const pct=Math.round(v*100);
-  const bf=document.getElementById(bfId);
-  bf.style.width=pct+'%';
-  bf.style.background=barColor(v);
-  document.getElementById(bvId).textContent=pct+'%';
-}
-function gradeStrength(g){
-  if(['A+','A'].includes(g)) return 0.95;
-  if(['B+','B'].includes(g)) return 0.80;
-  if(['C+','C'].includes(g)) return 0.65;
-  if(g==='D') return 0.50;
-  return 0.30;
-}
-async function runEval(){
-  const answer=document.getElementById('answer-input').files[0];
-  const reference=document.getElementById('reference-input').files[0];
-  const total=document.getElementById('max-marks').value || 100;
-  const subject=document.getElementById('subject').value || 'general';
-  if(!answer || !reference){alert('Please upload both answer and reference PDFs.');return;}
+    <div class="page" id="page-plg">
+      <div class="plg-page">
+        <aside class="plg-lp">
+          <div class="sec-label">Upload Sheets</div>
+          <div
+            class="upload-z"
+            onclick="document.getElementById('multi-input').click()"
+          >
+            <span class="uz-emoji">MULTI</span>
+            <div class="uz-h">Upload Multiple Answer Sheets</div>
+            <div class="uz-s">Select 2 or more files</div>
+          </div>
+          <input
+            type="file"
+            id="multi-input"
+            multiple
+            onchange="countFiles(this)"
+          />
+          <p
+            id="file-count"
+            style="
+              font-size: 12px;
+              font-family: var(--fw-m);
+              color: var(--red);
+              margin-bottom: 12px;
+            "
+          ></p>
+          <button class="run-btn" id="plg-btn" onclick="runPlg()">
+            RUN PLAGIARISM CHECK
+          </button>
+        </aside>
+        <main class="plg-rp">
+          <div class="empty-state" id="plg-empty">
+            <div class="es-icon">SCAN</div>
+            <h3>BACKEND ROUTE NEEDED</h3>
+            <p>
+              This UI is aligned to your design. Plagiarism endpoint is not yet
+              implemented in backend.
+            </p>
+          </div>
+        </main>
+      </div>
+    </div>
 
-  document.getElementById('eval-btn').disabled=true;
-  document.getElementById('eval-empty').style.display='none';
-  document.getElementById('result-area').classList.remove('show');
-  document.getElementById('eval-loading').classList.add('show');
+    <div class="page" id="page-about">
+      <div class="about-page">
+        <div class="about-hero">
+          <div>
+            <h2>HOW<br />NEXUS<br /><em>EVAL</em><br />WORKS</h2>
+          </div>
+          <div>
+            <p>
+              Nexus Eval combines OCR extraction, semantic similarity scoring,
+              grading logic, and feedback generation for automated assessment.
+            </p>
+          </div>
+        </div>
+        <div class="tech-section">
+          <h3
+            style="
+              font-family: var(--fw-d);
+              font-size: 28px;
+              letter-spacing: 2px;
+              color: var(--ink);
+              margin-bottom: 18px;
+            "
+          >
+            TECH STACK
+          </h3>
+          <div style="display: flex; flex-wrap: wrap; gap: 10px">
+            <span
+              style="
+                font-family: var(--fw-m);
+                font-size: 12px;
+                padding: 8px 18px;
+                border-radius: 4px;
+                background: var(--paper);
+                border: 1px solid var(--line);
+                color: var(--ink2);
+              "
+              >Flask</span
+            >
+            <span
+              style="
+                font-family: var(--fw-m);
+                font-size: 12px;
+                padding: 8px 18px;
+                border-radius: 4px;
+                background: var(--paper);
+                border: 1px solid var(--line);
+                color: var(--ink2);
+              "
+              >PaddleOCR / Tesseract</span
+            >
+            <span
+              style="
+                font-family: var(--fw-m);
+                font-size: 12px;
+                padding: 8px 18px;
+                border-radius: 4px;
+                background: var(--paper);
+                border: 1px solid var(--line);
+                color: var(--ink2);
+              "
+              >Sentence Transformers</span
+            >
+            <span
+              style="
+                font-family: var(--fw-m);
+                font-size: 12px;
+                padding: 8px 18px;
+                border-radius: 4px;
+                background: var(--paper);
+                border: 1px solid var(--line);
+                color: var(--ink2);
+              "
+              >Matplotlib</span
+            >
+          </div>
+        </div>
+      </div>
+    </div>
 
-  const fd=new FormData();
-  fd.append('answer_sheet', answer);
-  fd.append('reference', reference);
-  fd.append('subject', subject);
-  fd.append('total_marks', total);
+    <script>
+      function gotoPage(name, el) {
+        document
+          .querySelectorAll(".hdr-tab")
+          .forEach((t) => t.classList.remove("on"));
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("on"));
+        el.classList.add("on");
+        document.getElementById("page-" + name).classList.add("on");
+      }
+      function previewFile(inp, targetId) {
+        const f = inp.files[0];
+        const box = document.getElementById(targetId);
+        if (!f) {
+          box.style.display = "none";
+          return;
+        }
+        box.textContent = "Selected: " + f.name;
+        box.style.display = "block";
+      }
+      function countFiles(inp) {
+        document.getElementById("file-count").textContent =
+          inp.files.length + " file(s) selected";
+      }
+      function barColor(v) {
+        return v >= 0.75 ? "#1a7a6e" : v >= 0.5 ? "#c97c10" : "#d63b2f";
+      }
+      function setBar(bfId, bvId, v) {
+        const pct = Math.round(v * 100);
+        const bf = document.getElementById(bfId);
+        bf.style.width = pct + "%";
+        bf.style.background = barColor(v);
+        document.getElementById(bvId).textContent = pct + "%";
+      }
+      function gradeStrength(g) {
+        if (["A+", "A"].includes(g)) return 0.95;
+        if (["B+", "B"].includes(g)) return 0.8;
+        if (["C+", "C"].includes(g)) return 0.65;
+        if (g === "D") return 0.5;
+        return 0.3;
+      }
+      async function runEval() {
+        const answer = document.getElementById("answer-input").files[0];
+        const reference = document.getElementById("reference-input").files[0];
+        const total = document.getElementById("max-marks").value || 100;
+        const subject = document.getElementById("subject").value || "general";
+        if (!answer || !reference) {
+          alert("Please upload both answer and reference files.");
+          return;
+        }
 
-  try{
-    const res=await fetch('/pipeline/run',{method:'POST',body:fd});
-    const d=await res.json();
-    if(d.status!=='ok'){throw new Error(d.message || 'Evaluation failed');}
+        document.getElementById("eval-btn").disabled = true;
+        document.getElementById("eval-empty").style.display = "none";
+        document.getElementById("result-area").classList.remove("show");
+        document.getElementById("eval-loading").classList.add("show");
 
-    const circumference=2*Math.PI*45;
-    const pct=(Number(d.total)/Number(d.out_of||total));
-    const offset=circumference*(1-Math.min(Math.max(pct,0),1));
-    document.getElementById('ring-fill').style.strokeDashoffset=offset;
+        const fd = new FormData();
+        fd.append("answer_sheet", answer);
+        fd.append("reference", reference);
+        fd.append("subject", subject);
+        fd.append("total_marks", total);
 
-    document.getElementById('r-total').textContent=d.total;
-    document.getElementById('r-denom').textContent='/ '+d.out_of;
-    document.getElementById('r-grade').textContent=d.grade;
+        try {
+          const res = await fetch("/pipeline/run", {
+            method: "POST",
+            body: fd,
+          });
+          const d = await res.json();
+          if (d.status !== "ok") {
+            throw new Error(d.message || "Evaluation failed");
+          }
 
-    const qCount=Array.isArray(d.feedback)?d.feedback.length:0;
-    document.getElementById('tag-sem').textContent='SIM '+Math.round(Number(d.percentage))+'%';
-    document.getElementById('tag-sem').className='sh-tag '+(pct>=0.75?'hi':pct>=0.5?'mi':'lo');
-    document.getElementById('tag-kw').textContent='QUESTIONS '+qCount;
-    document.getElementById('tag-kw').className='sh-tag mi';
-    document.getElementById('tag-pres').textContent='SUBMISSION '+String(d.submission_id||'').slice(0,8);
-    document.getElementById('tag-pres').className='sh-tag lo';
+          const circumference = 2 * Math.PI * 45;
+          const pct = Number(d.total) / Number(d.out_of || total);
+          const offset = circumference * (1 - Math.min(Math.max(pct, 0), 1));
+          document.getElementById("ring-fill").style.strokeDashoffset = offset;
 
-    document.getElementById('mc-content').textContent=d.total;
-    document.getElementById('mc-pres').textContent=Math.round(Number(d.percentage))+'%';
-    document.getElementById('mc-engine').textContent='AI';
-    document.getElementById('eng-name').textContent='ALL-MINILM-L6-V2';
+          document.getElementById("r-total").textContent = d.total;
+          document.getElementById("r-denom").textContent = "/ " + d.out_of;
+          document.getElementById("r-grade").textContent = d.grade;
 
-    setBar('bf-sem','bv-sem',Math.max(0,Math.min(1,Number(d.percentage)/100)));
-    const questionRatio = qCount > 0 ? 1 : 0;
-    setBar('bf-kw','bv-kw',questionRatio);
-    setBar('bf-len','bv-len',gradeStrength(d.grade));
+          const qCount = Array.isArray(d.feedback) ? d.feedback.length : 0;
+          document.getElementById("tag-sem").textContent =
+            "SIM " + Math.round(Number(d.percentage)) + "%";
+          document.getElementById("tag-sem").className =
+            "sh-tag " + (pct >= 0.75 ? "hi" : pct >= 0.5 ? "mi" : "lo");
+          document.getElementById("tag-kw").textContent = "QUESTIONS " + qCount;
+          document.getElementById("tag-kw").className = "sh-tag mi";
+          document.getElementById("tag-pres").textContent =
+            "SUBMISSION " + String(d.submission_id || "").slice(0, 8);
+          document.getElementById("tag-pres").className = "sh-tag lo";
 
-    const chips=(d.feedback||[]).slice(0,12).map(f=>{
-      const mark = Number(f.percentage||0) >= 70 ? 'kw-f' : 'kw-m';
-      return '<span class="kw-chip '+mark+'">'+f.question+': '+(f.remark||'')+'</span>';
-    }).join('');
-    document.getElementById('kw-tags').innerHTML=chips || '<span style="font-size:12px;color:var(--ink4)">No feedback rows returned</span>';
+          document.getElementById("mc-content").textContent = d.total;
+          document.getElementById("mc-pres").textContent =
+            Math.round(Number(d.percentage)) + "%";
+          document.getElementById("mc-engine").textContent = "AI";
+          document.getElementById("eng-name").textContent = "ALL-MINILM-L6-V2";
 
-    document.getElementById('g-clarity').textContent=String(qCount);
-    document.getElementById('g-ink').textContent=d.grade || '-';
-    document.getElementById('g-align').textContent=(d.submission_id||'').slice(0,6);
+          setBar(
+            "bf-sem",
+            "bv-sem",
+            Math.max(0, Math.min(1, Number(d.percentage) / 100)),
+          );
+          const questionRatio = qCount > 0 ? 1 : 0;
+          setBar("bf-kw", "bv-kw", questionRatio);
+          setBar("bf-len", "bv-len", gradeStrength(d.grade));
 
-    document.getElementById('ocr-text').textContent='Evaluation completed successfully. Use Results page for detailed per-question marks and charts. Submission: '+(d.submission_id||'N/A');
+          const chips = (d.feedback || [])
+            .slice(0, 12)
+            .map((f) => {
+              const mark = Number(f.percentage || 0) >= 70 ? "kw-f" : "kw-m";
+              return (
+                '<span class="kw-chip ' +
+                mark +
+                '">' +
+                f.question +
+                ": " +
+                (f.remark || "") +
+                "</span>"
+              );
+            })
+            .join("");
+          document.getElementById("kw-tags").innerHTML =
+            chips ||
+            '<span style="font-size:12px;color:var(--ink4)">No feedback rows returned</span>';
 
-    document.getElementById('eval-loading').classList.remove('show');
-    document.getElementById('result-area').classList.add('show');
-  }catch(e){
-    document.getElementById('eval-loading').classList.remove('show');
-    document.getElementById('eval-empty').style.display='flex';
-    alert('Error: '+e.message);
-  }finally{
-    document.getElementById('eval-btn').disabled=false;
-  }
-}
-function runPlg(){
-  alert('Plagiarism UI is aligned, but backend endpoint /plagiarism is not implemented yet.');
-}
-</script>
-</body>
+          document.getElementById("g-clarity").textContent = String(qCount);
+          document.getElementById("g-ink").textContent = d.grade || "-";
+          document.getElementById("g-align").textContent = (
+            d.submission_id || ""
+          ).slice(0, 6);
+
+          document.getElementById("ocr-text").textContent =
+            "Evaluation completed successfully. Use Results page for detailed per-question marks and charts. Submission: " +
+            (d.submission_id || "N/A");
+
+          document.getElementById("eval-loading").classList.remove("show");
+          document.getElementById("result-area").classList.add("show");
+        } catch (e) {
+          document.getElementById("eval-loading").classList.remove("show");
+          document.getElementById("eval-empty").style.display = "flex";
+          alert("Error: " + e.message);
+        } finally {
+          document.getElementById("eval-btn").disabled = false;
+        }
+      }
+      function runPlg() {
+        alert(
+          "Plagiarism UI is aligned, but backend endpoint /plagiarism is not implemented yet.",
+        );
+      }
+    </script>
+  </body>
 </html>

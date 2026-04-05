@@ -2,15 +2,16 @@
 """Verify the Smart Evaluation System is working correctly."""
 
 import sys
-import json
 from pathlib import Path
 from io import BytesIO
+from typing import Any
 
 def verify_imports():
     """Verify all modules can be imported."""
     print("\n📦 VERIFYING IMPORTS...")
     try:
-        from smart_eval_app import app, CONFIG
+        from smart_eval_app import app as flask_app
+        _ = flask_app
         print("  ✅ Flask app imports successfully")
     except Exception as e:
         print(f"  ❌ Flask app import failed: {e}")
@@ -18,12 +19,14 @@ def verify_imports():
     
     try:
         from src.ocr.extractor import OCRExtractor
+        _ = OCRExtractor
         print("  ✅ OCRExtractor imports successfully")
     except Exception as e:
         print(f"  ⚠️  OCRExtractor import failed (optional): {e}")
     
     try:
         from src.preprocessing.cleaner import TextCleaner
+        _ = TextCleaner
         print("  ✅ TextCleaner imports successfully")
     except Exception as e:
         print(f"  ❌ TextCleaner import failed: {e}")
@@ -31,12 +34,14 @@ def verify_imports():
     
     try:
         from src.evaluation.similarity import SimilarityEngine
+        _ = SimilarityEngine
         print("  ✅ SimilarityEngine imports successfully")
     except Exception as e:
         print(f"  ⚠️  SimilarityEngine import failed (optional): {e}")
     
     try:
         from src.evaluation.grader import Grader
+        _ = Grader
         print("  ✅ Grader imports successfully")
     except Exception as e:
         print(f"  ❌ Grader import failed: {e}")
@@ -44,6 +49,7 @@ def verify_imports():
     
     try:
         from src.evaluation.feedback import FeedbackGenerator
+        _ = FeedbackGenerator
         print("  ✅ FeedbackGenerator imports successfully")
     except Exception as e:
         print(f"  ❌ FeedbackGenerator import failed: {e}")
@@ -51,12 +57,14 @@ def verify_imports():
     
     try:
         from src.visualization.charts import ChartGenerator
+        _ = ChartGenerator
         print("  ✅ ChartGenerator imports successfully")
     except Exception as e:
         print(f"  ⚠️  ChartGenerator import failed (optional): {e}")
     
     try:
         from src.db.database import Database
+        _ = Database
         print("  ✅ Database imports successfully")
     except Exception as e:
         print(f"  ⚠️  Database import failed (optional): {e}")
@@ -78,7 +86,7 @@ def verify_configuration():
             print(f"  ❌ Missing config sections: {missing}")
             return False
         
-        print(f"  ✅ Configuration valid")
+        print("  ✅ Configuration valid")
         print(f"     - Server: {config['server']['host']}:{config['server']['port']}")
         print(f"     - OCR: {config['ocr']['engine']}")
         print(f"     - Database: {config['database']['type']}")
@@ -131,9 +139,7 @@ def verify_files():
         'tests/test_similarity.py',
         'tests/test_feedback.py',
         'README.md',
-        'API.md',
-        'QUICKSTART.md',
-        'DEPLOYMENT.md',
+        'SETUP_AND_RUN.md',
     ]
     
     all_exist = True
@@ -153,14 +159,19 @@ def verify_processing_pipeline():
     
     try:
         from src.preprocessing.cleaner import TextCleaner
-        config = {'lowercase': True, 'fix_ocr_errors': True, 'remove_special_chars': True,
-                  'normalize_whitespace': True, 'remove_stopwords': False}
+        config: dict[str, Any] = {
+            'lowercase': True,
+            'fix_ocr_errors': True,
+            'remove_special_chars': True,
+            'normalize_whitespace': True,
+            'remove_stopwords': False,
+        }
         cleaner = TextCleaner(config)
         
         # Test cleaning
         text = "HELLO    World!!! Test@#$"
         cleaned = cleaner.clean(text)
-        print(f"  ✅ Text cleaning works")
+        print("  ✅ Text cleaning works")
         print(f"     Input:  '{text}'")
         print(f"     Output: '{cleaned}'")
         
@@ -175,7 +186,7 @@ def verify_processing_pipeline():
     
     try:
         from src.evaluation.grader import Grader
-        config = {
+        config: dict[str, Any] = {
             'total_marks': 100,
             'partial_scoring': True,
             'partial_scoring_levels': [
@@ -188,7 +199,7 @@ def verify_processing_pipeline():
         
         # Test grading
         result = grader.grade_question(0.85, 10)
-        print(f"  ✅ Grading works")
+        print("  ✅ Grading works")
         print(f"     Similarity: 0.85 → {result['marks_awarded']}/{result['max_marks']} marks ({result['percentage']}%)")
         
     except Exception as e:
@@ -203,7 +214,7 @@ def verify_flask_app():
     
     try:
         from smart_eval_app import app
-        print(f"  ✅ Flask app loads successfully")
+        print("  ✅ Flask app loads successfully")
         
         routes = [str(rule) for rule in app.url_map.iter_rules()]
         print(f"  ✅ {len(routes)} routes registered:")
@@ -253,8 +264,9 @@ def verify_runtime_dependencies():
         ok = False
 
     try:
-        from smart_eval_app import database, HAS_DATABASE
-        if HAS_DATABASE and database is not None:
+        import smart_eval_app as app_module
+        database_obj = getattr(app_module, 'database', None)
+        if database_obj is not None:
             print("  ✅ Database service initialized")
         else:
             print("  ⚠️  Database service not initialized (local fallback mode)")
@@ -323,8 +335,8 @@ def main():
         ("Flask Application", verify_flask_app),
         ("Endpoint Contracts", verify_endpoint_contracts),
     ]
-    
-    results = {}
+
+    results: dict[str, bool] = {}
     for name, check_func in checks:
         try:
             results[name] = check_func()

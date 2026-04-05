@@ -3,7 +3,7 @@
 import pytest
 import json
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 import sys
 
 # Add parent directory to path
@@ -34,7 +34,7 @@ class TestOCRExtractor:
     
     def test_initialization_with_paddleocr(self, config):
         """Test OCRExtractor initializes with PaddleOCR."""
-        with patch('src.ocr.extractor.PaddleOCR') as mock_paddle:
+        with patch('src.ocr.extractor.PaddleOCR'):
             extractor = OCRExtractor(config)
             assert extractor is not None
             assert extractor.engine is not None

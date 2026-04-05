@@ -1,7 +1,7 @@
 """Grading engine with partial scoring support."""
 
 import logging
-from typing import Dict, List, Any
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
