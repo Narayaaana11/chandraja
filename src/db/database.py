@@ -1,23 +1,25 @@
 """Database operations for MongoDB and MySQL."""
 
 import logging
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, cast
 
 logger = logging.getLogger(__name__)
 
 # MongoDB imports
 try:
     from pymongo import MongoClient
-    HAS_MONGODB = True
+    has_mongodb = True
 except ImportError:
-    HAS_MONGODB = False
+    MongoClient = None
+    has_mongodb = False
 
 # MySQL imports
 try:
     import pymysql
-    HAS_MYSQL = True
+    has_mysql = True
 except ImportError:
-    HAS_MYSQL = False
+    pymysql = None
+    has_mysql = False
 
 
 class Database:
@@ -37,7 +39,7 @@ class Database:
         self.config = config
         self.db_type = config.get('type', 'mongodb')
         self.db_name = config.get('db_name', 'smart_eval')
-        self.db = None
+        self.db: Any = None
         
         if self.db_type == 'mongodb':
             self._init_mongodb()
@@ -48,13 +50,13 @@ class Database:
     
     def _init_mongodb(self) -> None:
         """Initialize MongoDB connection."""
-        if not HAS_MONGODB:
+        if not has_mongodb or MongoClient is None:
             logger.error("pymongo not installed")
             return
         
         try:
             uri = self.config.get('mongodb_uri', 'mongodb://localhost:27017/')
-            client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+            client = cast(Any, MongoClient(uri, serverSelectionTimeoutMS=5000))
             # Test connection
             client.admin.command('ismaster')
             self.db = client[self.db_name]
@@ -65,7 +67,7 @@ class Database:
     
     def _init_mysql(self) -> None:
         """Initialize MySQL connection."""
-        if not HAS_MYSQL:
+        if not has_mysql or pymysql is None:
             logger.error("pymysql not installed")
             return
         
@@ -100,7 +102,7 @@ class Database:
             True if successful, False otherwise
         """
         try:
-            document = {
+            document: Dict[str, Any] = {
                 "file_id": file_id,
                 "filename": filename,
                 "file_type": file_type,
@@ -109,11 +111,11 @@ class Database:
                 "timestamp": timestamp
             }
             
-            if self.db_type == 'mongodb' and self.db:
+            if self.db_type == 'mongodb' and self.db is not None:
                 self.db.uploads.insert_one(document)
                 logger.info(f"Upload saved to MongoDB: {file_id}")
                 return True
-            elif self.db_type == 'mysql' and self.db:
+            elif self.db_type == 'mysql' and self.db is not None:
                 cursor = self.db.cursor()
                 sql = """
                     INSERT INTO uploads (file_id, filename, file_type, subject, path, timestamp)
@@ -131,7 +133,7 @@ class Database:
             logger.error(f"Error saving upload: {e}")
             return False
     
-    def save_extraction(self, file_id: str, pages: List[Dict],
+    def save_extraction(self, file_id: str, pages: List[Dict[str, Any]],
                        full_text: str, timestamp: str) -> bool:
         """
         Save OCR extraction result.
@@ -146,7 +148,7 @@ class Database:
             True if successful
         """
         try:
-            document = {
+            document: Dict[str, Any] = {
                 "file_id": file_id,
                 "pages": pages,
                 "full_text": full_text,
@@ -154,11 +156,11 @@ class Database:
                 "timestamp": timestamp
             }
             
-            if self.db_type == 'mongodb' and self.db:
+            if self.db_type == 'mongodb' and self.db is not None:
                 self.db.extractions.insert_one(document)
                 logger.info(f"Extraction saved: {file_id}")
                 return True
-            elif self.db_type == 'mysql' and self.db:
+            elif self.db_type == 'mysql' and self.db is not None:
                 cursor = self.db.cursor()
                 sql = """
                     INSERT INTO extractions (file_id, page_count, full_text, timestamp)
@@ -176,7 +178,7 @@ class Database:
     
     def save_result(self, submission_id: str, answer_file_id: str,
                    reference_file_id: str, scores: Dict[str, Any],
-                   feedback: List[Dict], timestamp: str) -> bool:
+                   feedback: List[Dict[str, Any]], timestamp: str) -> bool:
         """
         Save evaluation result.
         
@@ -192,7 +194,7 @@ class Database:
             True if successful
         """
         try:
-            document = {
+            document: Dict[str, Any] = {
                 "submission_id": submission_id,
                 "answer_file_id": answer_file_id,
                 "reference_file_id": reference_file_id,
@@ -205,11 +207,11 @@ class Database:
                 "timestamp": timestamp
             }
             
-            if self.db_type == 'mongodb' and self.db:
+            if self.db_type == 'mongodb' and self.db is not None:
                 self.db.results.insert_one(document)
                 logger.info(f"Result saved: {submission_id}")
                 return True
-            elif self.db_type == 'mysql' and self.db:
+            elif self.db_type == 'mysql' and self.db is not None:
                 cursor = self.db.cursor()
                 sql = """
                     INSERT INTO results
@@ -239,12 +241,12 @@ class Database:
             Result dictionary or None if not found
         """
         try:
-            if self.db_type == 'mongodb' and self.db:
+            if self.db_type == 'mongodb' and self.db is not None:
                 result = self.db.results.find_one({"submission_id": submission_id})
                 if result:
                     result.pop('_id', None)  # Remove MongoDB ID
                 return result
-            elif self.db_type == 'mysql' and self.db:
+            elif self.db_type == 'mysql' and self.db is not None:
                 cursor = self.db.cursor()
                 cursor.execute("SELECT * FROM results WHERE submission_id = %s", (submission_id,))
                 # This is simplified - actual implementation would map to dict
@@ -266,7 +268,7 @@ class Database:
             List of submission dictionaries
         """
         try:
-            if self.db_type == 'mongodb' and self.db:
+            if self.db_type == 'mongodb' and self.db is not None:
                 results = list(self.db.results.find({"subject": subject}))
                 for r in results:
                     r.pop('_id', None)
@@ -290,7 +292,7 @@ class Database:
             List of results sorted by timestamp
         """
         try:
-            if self.db_type == 'mongodb' and self.db:
+            if self.db_type == 'mongodb' and self.db is not None:
                 results = list(self.db.results.find(
                     {"student_id": student_id}
                 ).sort("timestamp", 1))

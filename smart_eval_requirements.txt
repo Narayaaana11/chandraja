@@ -1,9 +1,12 @@
 flask>=2.3.0
-paddlepaddle
-paddleocr
+# Paddle packages are unavailable on some newer Python versions (e.g., 3.14).
+# Keep them optional so setup remains installable and OCR can fall back to Tesseract.
+paddlepaddle; python_version < "3.12"
+paddleocr; python_version < "3.12"
 pdf2image
 Pillow
 pymupdf
+pytesseract
 sentence-transformers
 scikit-learn
 numpy

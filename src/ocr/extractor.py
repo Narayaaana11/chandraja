@@ -1,4 +1,4 @@
-"""OCR extraction module using PaddleOCR with Tesseract fallback."""
+"""OCR extraction module using PaddleOCR with Tesseract/EasyOCR fallback."""
 
 import logging
 import json
@@ -28,6 +28,13 @@ try:
 except ImportError:
     pytesseract = None
     HAS_TESSERACT = False
+
+try:
+    import easyocr
+    HAS_EASYOCR = True
+except ImportError:
+    easyocr = None
+    HAS_EASYOCR = False
 
 try:
     from pdf2image import convert_from_path
@@ -65,6 +72,8 @@ class OCRExtractor:
         self.language = config.get('language', 'en')
         self.dpi = config.get('dpi', 300)
         self.use_gpu = config.get('use_gpu', False)
+        self.tesseract_available = False
+        self.easyocr_reader = None
         
         self.ocr = None
         self._initialize_engine()
@@ -75,41 +84,61 @@ class OCRExtractor:
             if not HAS_PADDLEOCR:
                 logger.warning("PaddleOCR not installed, falling back to Tesseract")
                 self.engine = 'tesseract'
-                return
+            else:
+                # PaddleOCR 2.x and 3.x use different initialization arguments.
+                # Try a few compatible signatures before falling back to Tesseract.
+                paddle_init_options = [
+                    {
+                        "use_angle_cls": True,
+                        "lang": self.language,
+                        "use_gpu": self.use_gpu,
+                    },
+                    {
+                        "use_angle_cls": True,
+                        "lang": self.language,
+                    },
+                    {
+                        "lang": self.language,
+                    },
+                ]
 
-            # PaddleOCR 2.x and 3.x use different initialization arguments.
-            # Try a few compatible signatures before falling back to Tesseract.
-            paddle_init_options = [
-                {
-                    "use_angle_cls": True,
-                    "lang": self.language,
-                    "use_gpu": self.use_gpu,
-                },
-                {
-                    "use_angle_cls": True,
-                    "lang": self.language,
-                },
-                {
-                    "lang": self.language,
-                },
-            ]
+                for kwargs in paddle_init_options:
+                    try:
+                        self.ocr = PaddleOCR(**kwargs)
+                        logger.info(f"PaddleOCR initialized successfully with args: {list(kwargs.keys())}")
+                        return
+                    except Exception as e:
+                        logger.warning(f"PaddleOCR init attempt failed for args {list(kwargs.keys())}: {e}")
 
-            for kwargs in paddle_init_options:
-                try:
-                    self.ocr = PaddleOCR(**kwargs)
-                    logger.info(f"PaddleOCR initialized successfully with args: {list(kwargs.keys())}")
-                    return
-                except Exception as e:
-                    logger.warning(f"PaddleOCR init attempt failed for args {list(kwargs.keys())}: {e}")
-
-            logger.error("Failed to initialize PaddleOCR with all supported argument variants")
-            self.engine = 'tesseract'
+                logger.error("Failed to initialize PaddleOCR with all supported argument variants")
+                self.engine = 'tesseract'
 
         if self.engine == 'tesseract':
+            if HAS_TESSERACT:
+                try:
+                    # Validate that the native tesseract binary is available, not just pytesseract package.
+                    pytesseract.get_tesseract_version()
+                    self.tesseract_available = True
+                    logger.info("Using Tesseract as OCR engine")
+                    return
+                except Exception as e:
+                    self.tesseract_available = False
+                    logger.warning(f"Tesseract binary not available, trying EasyOCR fallback: {e}")
+            else:
+                logger.warning("pytesseract package not installed, trying EasyOCR fallback")
+
+            if HAS_EASYOCR:
+                try:
+                    self.easyocr_reader = easyocr.Reader([self.language], gpu=self.use_gpu)
+                    self.engine = 'easyocr'
+                    logger.info("Using EasyOCR as OCR engine")
+                    return
+                except Exception as e:
+                    logger.warning(f"EasyOCR initialization failed: {e}")
+
             if not HAS_TESSERACT:
-                logger.error("Tesseract not installed and PaddleOCR failed")
+                logger.error("No OCR engine available")
                 raise RuntimeError("No OCR engine available")
-            logger.info("Using Tesseract as OCR engine")
     
     def extract_from_pdf(self, pdf_path: str) -> Dict[str, Any]:
         """
@@ -139,19 +168,29 @@ class OCRExtractor:
             # Convert PDF pages to images
             logger.info(f"Converting PDF to images: {pdf_path}")
             images = self._convert_pdf_to_images(pdf_path)
+            native_text_pages = self._extract_native_pdf_text_pages(pdf_path)
             
             pages = []
             full_text = ""
             
             for page_num, image in enumerate(images, 1):
                 logger.info(f"Extracting text from page {page_num}/{len(images)}")
-                text = self._extract_from_image(image)
+                native_text = native_text_pages[page_num - 1] if page_num - 1 < len(native_text_pages) else ""
+                if native_text.strip():
+                    text = native_text.strip()
+                else:
+                    text = self._extract_from_image(image)
                 
                 pages.append({
                     "page": page_num,
                     "text": text
                 })
                 full_text += f"\n--- Page {page_num} ---\n{text}\n"
+
+            if images and not any((p.get("text") or "").strip() for p in pages):
+                raise RuntimeError(
+                    "No text could be extracted from PDF pages. Install Tesseract OCR binary or enable PaddleOCR/EasyOCR."
+                )
             
             logger.info(f"Successfully extracted text from {len(images)} pages")
             
@@ -164,6 +203,22 @@ class OCRExtractor:
         except Exception as e:
             logger.error(f"Error extracting from PDF: {e}")
             raise RuntimeError(f"PDF extraction failed: {str(e)}")
+
+    def _extract_native_pdf_text_pages(self, pdf_path: Path) -> List[str]:
+        """Extract embedded text directly from PDF pages when available."""
+        if not HAS_PYMUPDF or fitz is None:
+            return []
+
+        pages: List[str] = []
+        try:
+            with fitz.open(str(pdf_path)) as doc:
+                for page in doc:
+                    pages.append((page.get_text("text") or "").strip())
+        except Exception as e:
+            logger.warning(f"Native PDF text extraction failed: {e}")
+            return []
+
+        return pages
 
     def _convert_pdf_to_images(self, pdf_path: Path) -> List[Any]:
         """Convert PDF pages to PIL images using pdf2image or a PyMuPDF fallback."""
@@ -237,6 +292,10 @@ class OCRExtractor:
         try:
             if self.engine == 'paddleocr' and self.ocr:
                 return self._extract_paddleocr(image)
+            if self.engine == 'easyocr' and self.easyocr_reader is not None:
+                return self._extract_easyocr(image)
+            if self.engine == 'tesseract' and not self.tesseract_available:
+                return ""
             else:
                 return self._extract_tesseract(image)
         except Exception as e:
@@ -277,6 +336,20 @@ class OCRExtractor:
             return text.strip()
         except Exception as e:
             logger.error(f"Tesseract extraction failed: {e}")
+            return ""
+
+    def _extract_easyocr(self, image) -> str:
+        """Extract text using EasyOCR."""
+        try:
+            if not HAS_NUMPY or np is None:
+                logger.error("numpy is required for EasyOCR image input")
+                return ""
+
+            image_array = np.array(image)
+            result = self.easyocr_reader.readtext(image_array, detail=0, paragraph=True)
+            return " ".join(result).strip() if result else ""
+        except Exception as e:
+            logger.error(f"EasyOCR extraction failed: {e}")
             return ""
     
     def save_extraction(self, file_id: str, result: Dict[str, Any], 

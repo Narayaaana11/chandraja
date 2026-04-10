@@ -1,555 +1,388 @@
-# Smart Evaluation System for Handwritten Answer Sheets
-
-A complete AI-powered solution for automatically evaluating handwritten answer sheets using OCR, semantic similarity analysis, and intelligent feedback generation.
-
-## Public Repository
-
-This project is maintained as the public GitHub repository `chandraja`.
-
-- Setup and run: `SETUP_AND_RUN.md`
-- Contributing guide: `CONTRIBUTING.md`
-- Code of conduct: `CODE_OF_CONDUCT.md`
-- Security policy: `SECURITY.md`
-- License: `LICENSE`
-
-## Features
-
-- **Automatic OCR Processing**: Extract text from handwritten answer sheets using PaddleOCR with Tesseract fallback
-- **Text Preprocessing**: Clean, normalize, and segment extracted text into questions
-- **Semantic Similarity Analysis**: Compare student answers with reference answers using transformer models
-- **Intelligent Grading**: Partial scoring system with configurable thresholds
-- **Feedback Generation**: Question-wise feedback with remarks, missing keywords, and improvement areas
-- **Visualization**: Auto-generated charts (bar, pie, line) for comprehensive results
-- **Database Integration**: MongoDB and MySQL support for result persistence
-- **Web Interface**: Responsive HTML UI for uploads and results viewing
-
-## System Architecture
-
-### Phase 1: Configuration & Setup
-
-- `smart_eval_config.yaml`: Complete configuration for all modules
-- `smart_eval_requirements.txt`: All dependencies (17 packages)
-- Project directory structure with modular organization
-
-### Phase 2: File Upload API
-
-- `smart_eval_app.py` - Flask application with:
-  - `POST /upload/answer-sheet`: Upload student answer sheets
-  - `POST /upload/reference`: Upload reference materials
-  - `GET /uploads/<file_id>`: Retrieve file metadata
-
-### Phase 3: OCR Text Extraction
-
-- `src/ocr/extractor.py` - OCRExtractor class:
-  - PDF to image conversion (DPI 300)
-  - PaddleOCR extraction with GPU support option
-  - Tesseract fallback if PaddleOCR unavailable
-  - Page-by-page processing with JSON persistence
-
-### Phase 4: Text Preprocessing
-
-- `src/preprocessing/cleaner.py` - TextCleaner class:
-  - Lowercase conversion
-  - OCR error fixing (regex patterns)
-  - Special character removal
-  - Whitespace normalization
-  - Stopword removal (NLTK)
-  - Question splitting by delimiter
-
-### Phase 5: Evaluation Engine
-
-#### 5A - Similarity Engine
-
-- `src/evaluation/similarity.py`:
-  - SentenceTransformer-based semantic similarity
-  - Batch processing for efficiency
-  - Missing keyword extraction
-
-#### 5B - Grading System
-
-- `src/evaluation/grader.py`:
-  - Threshold-based partial scoring (0.8→100%, 0.6→75%, 0.4→50%, 0.2→25%, 0.0→0%)
-  - Automatic letter grade assignment (A+ to F)
-  - Total score calculation
-
-#### 5C - Feedback Generation
-
-- `src/evaluation/feedback.py`:
-  - Question-wise feedback with remarks (4 tiers)
-  - Missing keywords extraction
-  - Weak areas identification
-
-### Phase 6: Visualization
-
-- `src/visualization/charts.py` - ChartGenerator:
-  - Bar charts (marks comparison)
-  - Pie charts (score distribution)
-  - Line charts (performance trends)
-  - PNG output at 300 DPI
-
-### Phase 7: Database Layer
-
-- `src/db/database.py` - Database class:
-  - MongoDB support (primary)
-  - MySQL support (fallback)
-  - Methods: save_upload, save_extraction, save_result, get_result, get_submissions_by_subject
-
-### Phase 8: Frontend Templates
-
-- `templates/smart_eval_index.html`: File upload interface with AJAX pipeline
-- `templates/smart_eval_results.html`: Results dashboard with stats and charts
-- `templates/smart_eval_feedback.html`: Detailed feedback cards per question
-
-### Phase 9: Test Suite
-
-- `tests/test_ocr.py`: OCR extraction tests
-- `tests/test_preprocessing.py`: Text cleaning and splitting tests
-- `tests/test_similarity.py`: Similarity engine and grading tests
-- `tests/test_feedback.py`: Feedback generation and chart creation tests
-
-### Phase 10: API Routes
-
-Complete Flask API with integrated pipeline:
-
-- `POST /ocr/extract`: Text extraction from file
-- `POST /preprocess`: Text cleaning and question splitting
-- `POST /evaluate`: Full evaluation (similarity → grading → feedback → charts)
-- `GET /results/<submission_id>`: Retrieve evaluation results
-- `GET /results/<submission_id>/feedback`: Get detailed feedback
-- `POST /pipeline/run`: End-to-end pipeline in single request
-
-## Installation
-
-### Prerequisites
-
-- Python 3.9+
-- pip or conda
-
-### Setup
-
-1. **Clone/Extract the Project**
-
-```bash
-cd smart_eval
-```
-
-2. **Create Virtual Environment**
-
-```bash
-python -m venv venv
-# On Windows
-venv\Scripts\activate
-# On macOS/Linux
-source venv/bin/activate
-```
-
-3. **Install Dependencies**
-
-```bash
-pip install -r smart_eval_requirements.txt
-```
-
-### Configuration
-
-Edit `smart_eval_config.yaml` to customize:
-
-- OCR engine (paddleocr/tesseract)
-- Model name for similarity analysis
-- Scoring thresholds
-- Database connection
-- Upload folder locations
-
-## Usage
-
-### Starting the Server
-
-```bash
-python smart_eval_app.py
-```
-
-Server runs on `http://localhost:5000` by default (configurable in config.yaml)
-
-### Web Interface
-
-1. **Upload Interface** (`http://localhost:5000/`)
-   - Upload answer sheet PDF
-   - Upload reference material PDF
-   - Enter subject and total marks
-   - Click "Evaluate Answers"
-
-2. **Results Dashboard** (`/results`)
-   - View overall score and grade
-   - See question-wise marks
-   - View auto-generated charts
-   - Access detailed feedback
-
-3. **Feedback Page** (`/feedback?id=<submission_id>`)
-   - Question-by-question analysis
-   - Remarks and suggestions
-   - Missing keywords highlighted
-   - Areas for improvement
-
-### API Usage
-
-#### Full Pipeline (Single Request)
-
-```bash
-curl -X POST http://localhost:5000/pipeline/run \
-  -F "answer_sheet=@student_answers.pdf" \
-  -F "reference=@model_answers.pdf" \
-  -F "subject=Mathematics" \
-  -F "total_marks=100"
-```
-
-#### Step-by-Step Pipeline
-
-1. **Upload Files**
-
-```bash
-curl -X POST http://localhost:5000/upload/answer-sheet \
-  -F "file=@student_answers.pdf"
-# Returns: {"file_id": "UUID", ...}
-
-curl -X POST http://localhost:5000/upload/reference \
-  -F "file=@model_answers.pdf" \
-  -F "subject=Mathematics"
-# Returns: {"file_id": "UUID", ...}
-```
-
-2. **Extract Text**
-
-```bash
-curl -X POST http://localhost:5000/ocr/extract \
-  -H "Content-Type: application/json" \
-  -d '{"file_id": "UUID", "file_type": "answer_sheet"}'
-# Returns: Extracted text with page count
-```
-
-3. **Preprocess Text**
-
-```bash
-curl -X POST http://localhost:5000/preprocess \
-  -H "Content-Type: application/json" \
-  -d '{"file_id": "UUID"}'
-# Returns: Cleaned text split into questions
-```
-
-4. **Evaluate**
-
-```bash
-curl -X POST http://localhost:5000/evaluate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "answer_file_id": "UUID1",
-    "reference_file_id": "UUID2",
-    "subject": "Mathematics",
-    "total_marks": 100
-  }'
-# Returns: Complete evaluation with feedback and charts
-```
-
-5. **Retrieve Results**
-
-```bash
-curl http://localhost:5000/results/<submission_id>
-# Returns: Full results JSON
-
-curl http://localhost:5000/results/<submission_id>/feedback
-# Returns: Detailed feedback per question
-```
-
-## Running Tests
-
-```bash
-# Run all tests
-pytest tests/ -v
-
-# Run specific test file
-pytest tests/test_ocr.py -v
-
-# Run with coverage
-pytest tests/ --cov=src/
-```
-
-## Configuration Options
-
-### Server Settings
-
-```yaml
-server:
-  host: 0.0.0.0
-  port: 5000
-  debug: false
-  max_upload_size_mb: 20
-```
-
-### OCR Engine
-
-```yaml
-ocr:
-  engine: paddleocr # or tesseract
-  language: en
-  dpi: 300
-  use_gpu: false
-```
-
-### Evaluation
-
-```yaml
-evaluation:
-  model: all-MiniLM-L6-v2 # SentenceTransformer model
-  similarity_threshold: 0.5
-  question_delimiter: Q
-```
-
-### Grading
-
-```yaml
-grading:
-  total_marks: 100
-  partial_scoring: true
-  partial_scoring_levels:
-    - threshold: 0.8
-      percentage: 100
-    - threshold: 0.6
-      percentage: 75
-    # ... more thresholds
-```
-
-### Database
-
-```yaml
-database:
-  type: mongodb # or mysql
-  mongodb:
-    uri: mongodb://localhost:27017
-    database: smart_eval
-  mysql:
-    host: localhost
-    user: root
-    password: password
-    database: smart_eval
-```
+# Smart Eval
+
+Smart Eval is a Flask-based answer-sheet evaluation system that can:
+
+- Accept answer-sheet and reference PDFs
+- Extract text with OCR (native PDF text when available, OCR fallback otherwise)
+- Split and align answers by question
+- Compute semantic similarity scores
+- Generate marks, grade, and feedback
+- Save and retrieve evaluation results
+- Train a scoring model and use it for prediction utilities
+
+## What You Get
+
+- Web UI for full evaluation flow
+- REST API for integration and automation
+- Optional MongoDB/MySQL persistence layer
+- Training pipeline for model artifacts under models/
+- Test suite for API and core modules
+
+## End-to-End Evaluation Pipeline
+
+1. Upload answer sheet and reference
+2. OCR extraction
+3. Text preprocessing and question splitting
+4. Similarity scoring
+5. Grading
+6. Feedback generation
+7. Chart generation
+8. Optional database persistence
 
 ## Project Structure
 
-```
-smart_eval/
-├── smart_eval_app.py              # Flask application
-├── smart_eval_config.yaml         # Configuration file
-├── smart_eval_requirements.txt    # Dependencies
-├── templates/
-│   ├── smart_eval_index.html      # Upload interface
-│   ├── smart_eval_results.html    # Results dashboard
-│   └── smart_eval_feedback.html   # Feedback cards
-├── static/                        # Static files (CSS, JS)
-├── uploads/
-│   ├── answer_sheets/            # Student answer PDFs
-│   └── references/               # Reference material
-├── data/
-│   ├── extracted/               # OCR extraction results
-│   └── processed/               # Preprocessed text
-├── results/
-│   ├── extracted/              # Extraction metadata
-│   ├── processed/              # Processing results
-│   └── charts/                 # Generated visualization
-├── src/
-│   ├── ocr/
-│   │   ├── __init__.py
-│   │   └── extractor.py       # OCR extraction
-│   ├── preprocessing/
-│   │   ├── __init__.py
-│   │   └── cleaner.py         # Text cleaning
-│   ├── evaluation/
-│   │   ├── __init__.py
-│   │   ├── similarity.py      # Semantic similarity
-│   │   ├── grader.py          # Grading engine
-│   │   └── feedback.py        # Feedback generation
-│   ├── visualization/
-│   │   ├── __init__.py
-│   │   └── charts.py          # Chart generation
-│   └── db/
-│       ├── __init__.py
-│       └── database.py        # Database abstraction
-├── tests/
-│   ├── __init__.py
-│   ├── test_ocr.py
-│   ├── test_preprocessing.py
-│   ├── test_similarity.py
-│   └── test_feedback.py
-└── README.md                   # This file
-```
+- smart_eval_app.py: Flask app and API routes
+- smart_eval_config.yaml: Runtime config for web/API evaluation pipeline
+- .env: Optional environment variables (HF token, DB URI, etc.)
+- train_pipeline.py: End-to-end model training pipeline with dataset hash checks
+- scripts/train_model.py: Quick model training command
+- scripts/predict_score.py: Score prediction from text inputs
+- visualize_metrics.py: Generate MAE/R2 trend plots from run history
+- verify_system.py: Environment and route contract checks
+- src/: Core OCR, preprocessing, evaluation, DB, and ML modules
+- templates/: UI pages
+- tests/: Pytest suite
+- models/, logs/, results/, uploads/: generated artifacts
 
-## Error Handling & Fallbacks
+## Prerequisites
 
-### Graceful Degradation
+- Python 3.11+ (project currently runs on Python 3.14 as well)
+- pip
+- Optional: MongoDB or MySQL if you want persistent result storage
+- Optional OCR backends:
+  - PaddleOCR (only installed automatically for Python < 3.12 due package constraints)
+  - Tesseract binary in PATH for pytesseract backend
+  - EasyOCR as a fallback backend (install manually)
 
-- PaddleOCR → Tesseract (if PaddleOCR unavailable)
-- MongoDB → MySQL (if MongoDB unavailable)
-- SentenceTransformer loaded from cache or huggingface
+Notes:
 
-### Logging
+- The app allows PDF uploads by default (configured in smart_eval_config.yaml).
+- First run may download sentence-transformer model weights from Hugging Face.
 
-All operations logged to console/file:
+## Installation
 
-- OCR processing
-- Text preprocessing
-- Evaluation pipeline
-- Database operations
-- Chart generation
-
-### Recovery
-
-- Failed stages return descriptive error messages
-- Partial results available if evaluation incomplete
-- File uploads validated before processing
-
-## Performance Considerations
-
-- **OCR**: GPU acceleration available via PaddleOCR `use_gpu: true`
-- **Similarity**: Batch processing for multiple questions
-- **Charts**: Generated on-demand, cached in results/charts/
-- **Database**: Indexed queries for fast retrieval
-
-## Security
-
-- **File Uploads**:
-  - Secure filename generation
-  - File type validation (PDF only)
-  - 20MB size limit (configurable)
-
-- **File Paths**:
-  - UUID-based file IDs in responses
-  - Never expose raw file paths in API
-
-- **Database**:
-  - Connection strings in config (not hardcoded)
-  - Credentials should use environment variables for production
-
-## Troubleshooting
-
-### PaddleOCR Installation Issues
-
-```bash
-pip install paddlepaddle paddleocr --no-deps
-pip install pillow numpy
-```
-
-### SentenceTransformer Model Download
-
-First run will download ~80MB model automatically. Requires internet connection.
-
-```bash
-# Pre-download model
-python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
-```
-
-### MongoDB Connection Failed
-
-```bash
-# Check MongoDB is running
-mongosh  # or mongo
-
-# Use MySQL instead in config.yaml
-database:
-  type: mysql
-```
-
-### Port Already in Use
-
-Change port in config.yaml:
-
-```yaml
-server:
-  port: 8000 # Different port
-```
-
-## Design Patterns Used
-
-1. **Factory Pattern**: Engine initialization (OCR, Database)
-2. **Strategy Pattern**: Pluggable extraction engines
-3. **Repository Pattern**: Database abstraction
-4. **Chain of Responsibility**: Text cleaning pipeline
-5. **Template Method**: Save operations with consistent structure
-
-## Future Enhancements
-
-- [ ] Handwriting quality assessment
-- [ ] Answer sheet layout detection
-- [ ] Student identity verification
-- [ ] Batch evaluation dashboard
-- [ ] Performance analytics and trends
-- [ ] REST API documentation (Swagger)
-- [ ] Docker containerization
-- [ ] Authentication and authorization
-
-## Contributing
-
-1. Follow existing code style and patterns
-2. Add tests for new features
-3. Update configuration examples
-4. Document API changes
-
-## License
-
-MIT 2. If needed on Windows, set:
+### Windows PowerShell
 
 ```powershell
-$env:TESSERACT_CMD = "C:\Program Files\Tesseract-OCR\tesseract.exe"
+cd C:\Users\naray\Downloads\smart_eval_project\smart_eval
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r smart_eval_requirements.txt
 ```
 
-3. Install dependencies:
+Optional OCR fallback package:
 
-```bash
-pip install -r requirements.txt
+```powershell
+pip install easyocr
 ```
 
-## Dataset Inputs
+If you get script execution policy errors while activating venv:
 
-The loader supports:
-
-1. CSV files
-2. JSON and JSONL files
-3. Labeled folders where each subfolder name is the label and files are text/markdown
-
-For score regression training, expected columns are:
-
-1. student_text
-2. reference_text
-3. keywords
-4. max_marks
-5. target_marks
-
-## End-to-End Training
-
-Run full pipeline (load, preprocess, split, train, evaluate, version, best-model update):
-
-```bash
-python train_pipeline.py --dataset data/sample_training_data.csv --retrain
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
-Optional run comparison table:
+### macOS/Linux
 
 ```bash
-python train_pipeline.py --dataset data/sample_training_data.csv --retrain --compare
+cd /path/to/smart_eval
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+pip install -r smart_eval_requirements.txt
 ```
 
-## Metrics Visualization
+## Configuration
 
-```bash
+### 1) Evaluation app config: smart_eval_config.yaml
+
+Key sections:
+
+- server: host, port, debug, max upload size
+- ocr: engine and OCR settings
+- preprocessing: cleaning options
+- evaluation: model name, similarity threshold, question delimiter
+- grading: total marks and partial scoring thresholds
+- database: mongodb/mysql connection settings
+- storage: upload/results folders and allowed extensions
+
+Common edits:
+
+- Change host/port under server
+- Change database type and connection settings under database
+- Adjust allowed file types under storage.allowed_extensions
+
+### 2) Optional environment variables: .env
+
+Included variables:
+
+- TESSERACT_CMD
+- HF_TOKEN
+- MONGODB_URI
+- DB_NAME
+
+Important:
+
+- Running python smart_eval_app.py does not automatically guarantee .env loading unless your environment is configured for it.
+- If needed, set env vars in your shell/session directly before launch.
+
+### 3) ML config for training: config.yaml (optional)
+
+ML modules in src/smart_eval/config.py read config.yaml (if present) for training paths/tuning settings and merge with defaults.
+
+If config.yaml is absent, safe defaults are used.
+
+## Run the Project
+
+### 1) Optional system verification
+
+```powershell
+python verify_system.py
+```
+
+### 2) Start server
+
+```powershell
+python smart_eval_app.py
+```
+
+Expected local URLs:
+
+- http://127.0.0.1:5000
+- http://localhost:5000
+
+### 3) Health check
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:5000/health"
+```
+
+### 4) Stop server
+
+Press Ctrl+C in the server terminal.
+
+## How to Use the Web App (Full Flow)
+
+1. Open http://127.0.0.1:5000
+2. Upload answer PDF and reference PDF
+3. Set subject and max marks
+4. Click the evaluate action (UI calls /pipeline/run)
+5. Note the returned submission_id
+6. Open results page with query param:
+   - /results?id=<submission_id>
+7. Open feedback page with query param:
+   - /feedback?id=<submission_id>
+
+## API Usage
+
+### API Route Reference
+
+- GET /: Main evaluation page
+- GET /health: Service readiness and component status
+- GET /results: Results page UI (requires ?id=... to load a submission)
+- GET /feedback: Feedback page UI (requires ?id=...)
+- POST /upload/answer-sheet: Upload answer PDF
+- POST /upload/reference: Upload reference PDF (+ optional subject, question_paper_id)
+- GET /uploads/<file_id>: Get upload metadata
+- POST /ocr/extract: OCR extraction for uploaded file_id
+- POST /preprocess: Clean and split extracted text into questions
+- POST /evaluate: Evaluate preprocessed answer/reference by file IDs
+- GET /results/<submission_id>: Retrieve stored evaluation result
+- GET /results/<submission_id>/feedback: Retrieve stored feedback
+- POST /pipeline/run: One-shot upload->ocr->preprocess->evaluate pipeline
+
+### One-Shot Pipeline (Recommended)
+
+```powershell
+$resp = Invoke-RestMethod -Uri "http://127.0.0.1:5000/pipeline/run" -Method Post -Form @{
+  answer_sheet = Get-Item ".\path\to\answer.pdf"
+  reference    = Get-Item ".\path\to\reference.pdf"
+  subject      = "physics"
+  total_marks  = "100"
+}
+
+$resp
+$resp.submission_id
+```
+
+Get results and feedback:
+
+```powershell
+$submission = $resp.submission_id
+Invoke-RestMethod -Uri "http://127.0.0.1:5000/results/$submission"
+Invoke-RestMethod -Uri "http://127.0.0.1:5000/results/$submission/feedback"
+```
+
+### Step-by-Step Pipeline (Advanced / Debugging)
+
+1. Upload files
+
+```powershell
+$answer = Invoke-RestMethod -Uri "http://127.0.0.1:5000/upload/answer-sheet" -Method Post -Form @{
+  file = Get-Item ".\path\to\answer.pdf"
+}
+
+$reference = Invoke-RestMethod -Uri "http://127.0.0.1:5000/upload/reference" -Method Post -Form @{
+  file              = Get-Item ".\path\to\reference.pdf"
+  subject           = "physics"
+  question_paper_id = "qp-101"
+}
+```
+
+2. OCR extraction
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:5000/ocr/extract" -Method Post -ContentType "application/json" -Body (
+  @{ file_id = $answer.file_id; file_type = "answer_sheet" } | ConvertTo-Json
+)
+
+Invoke-RestMethod -Uri "http://127.0.0.1:5000/ocr/extract" -Method Post -ContentType "application/json" -Body (
+  @{ file_id = $reference.file_id; file_type = "reference" } | ConvertTo-Json
+)
+```
+
+3. Preprocess
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:5000/preprocess" -Method Post -ContentType "application/json" -Body (
+  @{ file_id = $answer.file_id } | ConvertTo-Json
+)
+
+Invoke-RestMethod -Uri "http://127.0.0.1:5000/preprocess" -Method Post -ContentType "application/json" -Body (
+  @{ file_id = $reference.file_id } | ConvertTo-Json
+)
+```
+
+4. Evaluate
+
+```powershell
+$eval = Invoke-RestMethod -Uri "http://127.0.0.1:5000/evaluate" -Method Post -ContentType "application/json" -Body (
+  @{
+    answer_file_id    = $answer.file_id
+    reference_file_id = $reference.file_id
+    total_marks       = 100
+    subject           = "physics"
+  } | ConvertTo-Json
+)
+
+$eval
+```
+
+## Training and Prediction
+
+### Train with quick script
+
+```powershell
+python scripts/train_model.py --dataset data/sample_training_data.csv
+```
+
+### Train with full pipeline (hash-aware)
+
+```powershell
+python train_pipeline.py --dataset data/sample_training_data.csv
+```
+
+Useful flags:
+
+- --force: retrain even if dataset hash has not changed
+- --retrain: explicit retrain trigger
+- --compare: print historical runs sorted by R2
+
+Example:
+
+```powershell
+python train_pipeline.py --dataset data/sample_training_data.csv --force --compare
+```
+
+### Predict marks using trained model
+
+```powershell
+python scripts/predict_score.py `
+  --student "Photosynthesis uses chlorophyll and sunlight." `
+  --reference "Plants use sunlight and chlorophyll to produce glucose and oxygen." `
+  --keywords "photosynthesis,chlorophyll,glucose,oxygen" `
+  --max-marks 10
+```
+
+### Visualize training trends
+
+```powershell
 python visualize_metrics.py --output logs/metrics_trend.png
 ```
 
-## Inference CLI
+## Dataset Schema for Model Training
 
-```bash
-python scripts/predict_score.py --student "your answer" --reference "expected answer" --keywords "k1,k2,k3" --max-marks 10
+CSV must contain these columns:
+
+- student_text
+- reference_text
+- keywords
+- max_marks
+- target_marks
+
+Sample file available at data/sample_training_data.csv.
+
+## Testing
+
+Run all tests:
+
+```powershell
+pytest -q
 ```
 
-## Flask Serving
+Run specific suites:
 
-```bash
-python app.py
+```powershell
+pytest tests/test_app_routes.py -q
+pytest tests/test_ocr.py -q
+pytest tests/test_similarity.py -q
 ```
 
-Serving uses models/best_model.pkl by default and falls back to legacy model_artifacts files if needed. API routes and response schema stay compatible.
+## Output and Artifact Locations
+
+- uploads/: uploaded answer sheets and references
+- results/extracted/: OCR output JSON
+- results/processed/: cleaned/split question JSON
+- results/charts/: generated charts
+- models/: trained model artifacts and manifest
+- model_artifacts/: legacy model compatibility artifacts
+- logs/run_history.json: training run history
+
+## Known Behaviors and Notes
+
+- On Python 3.14, PaddleOCR packages are skipped by requirement markers; OCR falls back to Tesseract or EasyOCR.
+- If no OCR backend is available, OCR endpoints return service errors.
+- /results/<submission_id> and /results/<submission_id>/feedback require database persistence to have stored the submission.
+- The UI references plagiarism in some legacy template code, but no Flask /plagiarism route is currently exposed.
+
+## Troubleshooting
+
+### App starts but first request is slow
+
+Reason: sentence-transformers model download on first run. Wait for model caching to finish.
+
+### OCR fails
+
+- Install Tesseract binary and add it to PATH, or
+- Install EasyOCR (pip install easyocr)
+
+### Database not saving results
+
+- Confirm database settings in smart_eval_config.yaml
+- Ensure MongoDB/MySQL service is reachable
+- Check /health component readiness
+
+### Port already in use
+
+- Change server.port in smart_eval_config.yaml
+- Restart app
+
+### Upload returns 415
+
+- File type not allowed by storage.allowed_extensions
+- Default is PDF only
+
+## Production Note
+
+This project runs with Flask development server by default (app.run with debug config). For production deployment, use a production WSGI server and harden configuration/security accordingly.

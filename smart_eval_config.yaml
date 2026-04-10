@@ -22,6 +22,12 @@ evaluation:
   similarity_threshold: 0.5
   keyword_matching: true
   question_delimiter: "Q" # prefix used to split questions e.g. Q1, Q2
+  semantic_fallback_boost:
+    multiplier: 1.85
+    intercept: 0.05
+    max_multiplier: 2.10
+    low_score_threshold: 0.12
+    low_score_cap: 0.18
 
 grading:
   total_marks: 100

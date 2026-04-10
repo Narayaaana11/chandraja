@@ -87,6 +87,14 @@ class TestSimilarityEngine:
         result = similarity_engine.compute_batch(student_questions, reference_questions)
         
         assert isinstance(result, dict)
+
+    def test_compute_batch_sanitizes_non_finite_scores(self, similarity_engine, monkeypatch):
+        """Test batch computation converts NaN/inf scores to 0.0."""
+        monkeypatch.setattr(similarity_engine, 'compute', lambda *_: float('nan'))
+
+        result = similarity_engine.compute_batch({'Q1': 'A'}, {'Q1': 'B'})
+
+        assert result['Q1'] == 0.0
     
     def test_extract_missing_keywords_basic(self, similarity_engine):
         """Test keyword extraction."""

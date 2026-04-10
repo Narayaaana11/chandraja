@@ -138,8 +138,6 @@ def verify_files():
         'tests/test_preprocessing.py',
         'tests/test_similarity.py',
         'tests/test_feedback.py',
-        'README.md',
-        'SETUP_AND_RUN.md',
     ]
     
     all_exist = True

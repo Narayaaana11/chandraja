@@ -77,9 +77,12 @@ class SimilarityEngine:
             # Compute cosine similarity
             from sentence_transformers.util import pytorch_cos_sim
             similarity = pytorch_cos_sim(student_embedding, reference_embedding)[0][0]
-            
-            # Convert to float between 0 and 1
-            similarity_score = float(np.clip(float(similarity.numpy()), 0.0, 1.0))
+
+            # Convert to float between 0 and 1 and guard non-finite model outputs.
+            raw_score = float(similarity.numpy())
+            if not np.isfinite(raw_score):
+                raise ValueError("Non-finite semantic similarity score")
+            similarity_score = float(np.clip(raw_score, 0.0, 1.0))
             
             logger.debug(f"Similarity computed: {similarity_score:.4f}")
             return similarity_score
@@ -107,6 +110,8 @@ class SimilarityEngine:
             coverage = intersection / len(reference_set) if reference_set else 0.0
 
             score = 0.6 * jaccard + 0.4 * coverage
+            if not np.isfinite(score):
+                return 0.0
             return float(np.clip(score, 0.0, 1.0))
         except Exception as e:
             logger.error(f"Lexical similarity failed: {e}")
@@ -144,6 +149,8 @@ class SimilarityEngine:
                 student_ans = student_questions[q_id]
                 reference_ans = reference_questions[q_id]
                 score = self.compute(student_ans, reference_ans)
+                if not np.isfinite(score):
+                    score = 0.0
                 scores[q_id] = score
             else:
                 logger.warning(f"No reference answer found for {q_id}")

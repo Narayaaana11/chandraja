@@ -54,7 +54,7 @@ class TestOCRExtractor:
             mock_convert.return_value = [mock_image]
             
             # Mock extraction
-            with patch.object(mock_extractor, '_extract_paddleocr', return_value='extracted text'):
+            with patch.object(mock_extractor, '_extract_from_image', return_value='extracted text'):
                 result = mock_extractor.extract_from_pdf('/path/to/test.pdf')
                 
                 assert isinstance(result, dict)
@@ -68,7 +68,7 @@ class TestOCRExtractor:
             mock_images = [MagicMock() for _ in range(3)]
             mock_convert.return_value = mock_images
             
-            with patch.object(mock_extractor, '_extract_paddleocr', return_value='text'):
+            with patch.object(mock_extractor, '_extract_from_image', return_value='text'):
                 result = mock_extractor.extract_from_pdf('/path/to/test.pdf')
                 assert result['page_count'] == 3
     

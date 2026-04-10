@@ -169,6 +169,31 @@ class TestQuestionSplitting:
         # Should handle gracefully
         assert result['count'] >= 0
 
+    def test_split_numeric_only_question_format(self, cleaner):
+        """Test splitting when questions are numbered without a Q prefix."""
+        text = "1. Define photosynthesis. 2. Explain chlorophyll role."
+        result = cleaner.split_by_questions(text, delimiter='Q')
+
+        assert result['count'] >= 2
+        assert 'Q1' in result['questions']
+        assert 'Q2' in result['questions']
+
+    def test_split_exam_headings_ignores_numbered_subpoints(self, cleaner):
+        """Test splitting exam headings with nested numbered points."""
+        text = (
+            "1. Discuss statistical indexing methods\n"
+            "1. term frequency\n"
+            "2. inverse document frequency\n"
+            "2. Explain visualization technologies\n"
+            "1. treemap\n"
+            "2. graph view"
+        )
+        result = cleaner.split_by_questions(text, delimiter='Q')
+
+        assert result['count'] >= 2
+        assert 'Q1' in result['questions']
+        assert 'Q2' in result['questions']
+
 
 class TestTextCleanerEdgeCases:
     """Test edge cases for text cleaning."""

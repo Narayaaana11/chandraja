@@ -5,7 +5,7 @@ import logging
 import json
 import tempfile
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, List, Tuple
 
 try:
     import nltk
@@ -159,9 +159,9 @@ class TextCleaner:
 
         # Support noisy OCR variants such as "q.no.1", "question 1", "q 1", etc.
         patterns = [
-            rf'\b{re.escape(delimiter)}\s*\.?\s*no\.?\s*(\d+)?\b',
-            r'\bquestion\s*(\d+)\b',
-            rf'\b{re.escape(delimiter)}\s*(\d+)\b',
+            rf'\b{re.escape(delimiter)}\s*\.?\s*no\.?\s*([1-9]\d*)\b',
+            r'\bquestion\s*([1-9]\d*)\b',
+            rf'\b{re.escape(delimiter)}\s*([1-9]\d*)\b',
         ]
 
         matches = []
@@ -169,6 +169,36 @@ class TextCleaner:
             for match in re.finditer(pattern, text, flags=re.IGNORECASE):
                 q_num = match.group(1).strip() if match.group(1) else ""
                 matches.append((match.start(), match.end(), q_num))
+
+        # Line-based question prompt pattern (e.g., "1. Discuss ...") helps with
+        # exam/workbook files that also contain numbered sub-points like "1. TF".
+        if len(matches) <= 1:
+            prompt_pattern = re.compile(
+                r'(?mi)^\s*(\d{1,2})\.\s+(.{8,120})$'
+            )
+            prompt_leads = re.compile(
+                r'(?i)^(discuss|explain|define|describe|what|why|how|write|elaborate|differentiate|compare|list|state|give|analyze|mention|briefly)\b'
+            )
+
+            heading_matches = []
+            for match in prompt_pattern.finditer(text):
+                q_num = match.group(1).strip()
+                line_text = match.group(2).strip()
+                if prompt_leads.match(line_text):
+                    heading_matches.append((match.start(), match.end(), q_num))
+
+            if len(heading_matches) >= 2:
+                matches = heading_matches
+
+        # Fallback for reference/workbook formats like "1. ... 2. ...".
+        if not matches:
+            numbered_matches = []
+            for match in re.finditer(r'(?<!\w)(\d{1,3})\s*[\.)\:\-]\s+', text):
+                q_num = match.group(1).strip()
+                numbered_matches.append((match.start(), match.end(), q_num))
+
+            if self._looks_like_numbered_questions(numbered_matches):
+                matches.extend(numbered_matches)
 
         # Secondary fallback for OCR dumps that preserve page markers.
         if not matches:
@@ -217,6 +247,30 @@ class TextCleaner:
             "questions": questions,
             "count": len(questions)
         }
+
+    def _looks_like_numbered_questions(self, matches: List[Tuple[int, int, str]]) -> bool:
+        """Heuristic to avoid treating arbitrary numbers as question delimiters."""
+        if not matches:
+            return False
+
+        numbers = [int(item[2]) for item in matches if item[2].isdigit()]
+        if not numbers:
+            return False
+
+        if len(numbers) == 1:
+            return numbers[0] == 1
+
+        starts_like_questions = numbers[0] <= 3
+        monotonic_steps = sum(1 for i in range(1, len(numbers)) if numbers[i] >= numbers[i - 1])
+        close_steps = sum(
+            1 for i in range(1, len(numbers))
+            if numbers[i] >= numbers[i - 1] and (numbers[i] - numbers[i - 1]) <= 2
+        )
+
+        mostly_monotonic = monotonic_steps >= max(1, len(numbers) - 2)
+        mostly_close = close_steps >= max(1, len(numbers) - 2)
+
+        return starts_like_questions and mostly_monotonic and mostly_close
     
     def save_processed(self, file_id: str, result: Dict[str, Any],
                       output_dir: str = None) -> str:
